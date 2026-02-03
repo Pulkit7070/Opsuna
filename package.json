@@ -1,0 +1,28 @@
+{
+  "name": "opsuna-tambo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP Toolchain Composer - Safe Action UI System",
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "clean": "pnpm -r clean",
+    "db:generate": "pnpm --filter @opsuna/server db:generate",
+    "db:push": "pnpm --filter @opsuna/server db:push",
+    "db:studio": "pnpm --filter @opsuna/server db:studio"
+  },
+  "keywords": [
+    "mcp",
+    "toolchain",
+    "ai",
+    "automation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "packageManager": "pnpm@8.15.0",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
