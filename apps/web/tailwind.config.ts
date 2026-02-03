@@ -9,79 +9,64 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Surface colors - Analog Noise theme
+        // Surface colors - PsudoKit dark theme
         surface: {
-          base: '#140a25',
-          card: 'rgba(20, 10, 37, 0.85)',
-          'card-hover': 'rgba(46, 16, 32, 0.85)',
+          base: '#000000',
+          card: '#111111',
+          'card-hover': '#1a1a1a',
+          input: '#0A0A0A',
         },
         // Border colors
         border: {
-          subtle: 'rgba(159, 95, 53, 0.15)',
-          highlight: 'rgba(159, 95, 53, 0.3)',
-          DEFAULT: 'rgba(159, 95, 53, 0.15)',
+          subtle: '#333333',
+          highlight: '#444444',
+          DEFAULT: '#333333',
         },
-        // Accent colors - Analog Noise palette
+        // Accent colors - minimal
         accent: {
-          orange: '#9f5f35',
-          'orange-bright': '#c97b4a',
-          brown: '#4a2c2a',
-          violet: '#2e1020',
-          purple: '#8b5a8b',
-          pink: '#c97b9d',
-          cyan: '#6b9f9f',
-          indigo: '#6b5a8b',
-          gold: '#c9a035',
-          'gold-dim': 'rgba(159, 95, 53, 0.15)',
-        },
-        // Gradient colors
-        gradient: {
-          orange: '#9f5f35',
-          brown: '#4a2c2a',
-          violet: '#2e1020',
-          deep: '#140a25',
-          shadow: '#050308',
+          white: '#FFFFFF',
+          gray: '#A1A1AA',
+          dark: '#111111',
         },
         // Text colors
         text: {
-          primary: '#f5e6d3',
-          secondary: '#b8a090',
-          muted: '#7a6a5a',
+          primary: '#FFFFFF',
+          secondary: '#A1A1AA',
+          muted: '#71717A',
         },
         // Tag colors
         tag: {
           bg: 'rgba(255, 255, 255, 0.05)',
         },
         // Semantic colors
-        background: '#140a25',
-        foreground: '#f5e6d3',
+        background: '#000000',
+        foreground: '#FFFFFF',
         primary: {
-          DEFAULT: '#9f5f35',
-          foreground: '#f5e6d3',
+          DEFAULT: '#FFFFFF',
+          foreground: '#000000',
         },
         secondary: {
-          DEFAULT: 'rgba(46, 16, 32, 0.8)',
-          foreground: '#f5e6d3',
+          DEFAULT: '#111111',
+          foreground: '#FFFFFF',
         },
         destructive: {
           DEFAULT: '#ef4444',
           foreground: '#ffffff',
         },
         muted: {
-          DEFAULT: 'rgba(74, 44, 42, 0.5)',
-          foreground: '#b8a090',
+          DEFAULT: '#111111',
+          foreground: '#A1A1AA',
         },
         card: {
-          DEFAULT: 'rgba(20, 10, 37, 0.85)',
-          foreground: '#f5e6d3',
+          DEFAULT: '#111111',
+          foreground: '#FFFFFF',
         },
-        input: 'rgba(74, 44, 42, 0.5)',
-        ring: '#9f5f35',
+        input: '#0A0A0A',
+        ring: '#FFFFFF',
       },
       fontFamily: {
-        serif: ['Newsreader', 'Playfair Display', 'Georgia', 'serif'],
-        sans: ['Geist', 'Inter', 'SF Pro Display', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'Consolas', 'monospace'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Consolas', 'monospace'],
       },
       letterSpacing: {
         tighter: '-0.02em',
@@ -92,16 +77,12 @@ const config: Config = {
         sm: '8px',
       },
       boxShadow: {
-        'glow-orange': '0 0 30px rgba(159, 95, 53, 0.4)',
-        'glow-purple': '0 0 20px rgba(139, 90, 139, 0.4)',
-        'glow-warm': '0 0 25px rgba(201, 123, 74, 0.3)',
-        'card-hover': '0 20px 40px -10px rgba(5, 3, 8, 0.5)',
-        'analog': '0 8px 32px rgba(5, 3, 8, 0.4)',
+        'subtle': '0 1px 2px rgba(0, 0, 0, 0.5)',
+        'card': '0 4px 12px rgba(0, 0, 0, 0.4)',
+        'card-hover': '0 8px 24px rgba(0, 0, 0, 0.6)',
       },
       backgroundImage: {
-        'analog-gradient': 'radial-gradient(circle at 90% 90%, #9f5f35 0%, #4a2c2a 30%, #140a25 70%, #050308 100%)',
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'noise-overlay': "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")",
       },
       animation: {
         'blob': 'blob 7s infinite',

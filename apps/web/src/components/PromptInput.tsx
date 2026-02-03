@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Wand2, Loader2, ArrowRight, Terminal } from 'lucide-react';
+import { Loader2, ArrowRight } from 'lucide-react';
 
 interface PromptInputProps {
   value: string;
@@ -36,16 +36,13 @@ export function PromptInput({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass-card glow-border p-6"
+      className="card p-6"
     >
       <div className="space-y-5">
         {/* Header */}
-        <div className="flex items-center gap-2">
-          <Terminal className="h-5 w-5 text-accent-orange" />
-          <label htmlFor="prompt" className="text-lg font-serif font-medium text-text-primary">
-            What would you like to <span className="italic text-gradient">automate</span>?
-          </label>
-        </div>
+        <label htmlFor="prompt" className="text-lg font-semibold text-white">
+          What would you like to automate?
+        </label>
 
         {/* Input area */}
         <div className="relative">
@@ -55,12 +52,11 @@ export function PromptInput({
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="e.g., Deploy staging and run smoke tests"
-            className="w-full min-h-[120px] px-4 py-3 bg-surface-base/50 border border-accent-orange/15 rounded-lg
-                       text-text-primary placeholder:text-text-muted font-sans
-                       focus:outline-none focus:border-accent-orange focus:ring-1 focus:ring-accent-orange/50
-                       resize-none transition-all duration-200 backdrop-blur-sm"
+            className="w-full min-h-[120px] px-4 py-3 bg-[#0A0A0A] border border-[#333333] rounded-lg
+                       text-white placeholder:text-[#71717A]
+                       focus:outline-none focus:border-white focus:ring-1 focus:ring-white/10
+                       resize-none transition-all duration-200"
             disabled={disabled || isLoading}
-            style={{ caretColor: '#9f5f35' }}
           />
 
           {/* Submit button */}
@@ -69,9 +65,9 @@ export function PromptInput({
             whileTap={{ scale: 0.95 }}
             onClick={onSubmit}
             disabled={!value.trim() || isLoading || disabled}
-            className="absolute bottom-3 right-3 p-2.5 bg-gradient-to-r from-accent-orange to-accent-orange-bright text-text-primary rounded-lg
+            className="absolute bottom-3 right-3 p-2.5 bg-white text-black rounded-md
                        disabled:opacity-50 disabled:cursor-not-allowed
-                       hover:shadow-glow-orange transition-all duration-200"
+                       hover:bg-[#E5E5E5] transition-all duration-200"
           >
             {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -83,43 +79,42 @@ export function PromptInput({
 
         {/* Footer */}
         <div className="flex items-center justify-between">
-          <div className="text-xs font-mono text-text-muted">
+          <div className="text-xs text-[#71717A]">
             Press{' '}
-            <kbd className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-text-secondary">
+            <kbd className="px-1.5 py-0.5 bg-[#111111] border border-[#333333] rounded text-[#A1A1AA]">
               Ctrl
             </kbd>
             {' + '}
-            <kbd className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-text-secondary">
+            <kbd className="px-1.5 py-0.5 bg-[#111111] border border-[#333333] rounded text-[#A1A1AA]">
               Enter
             </kbd>
             {' '}to submit
           </div>
 
           {isLoading && (
-            <div className="flex items-center gap-2 text-sm text-accent-orange">
-              <Wand2 className="h-4 w-4 animate-pulse" />
-              <span className="font-mono">Generating plan...</span>
+            <div className="flex items-center gap-2 text-sm text-white">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Generating plan...</span>
             </div>
           )}
         </div>
 
         {/* Example prompts */}
-        <div className="pt-2 border-t border-white/5">
-          <p className="text-xs font-mono text-text-muted mb-3 uppercase tracking-wider">
+        <div className="pt-4 border-t border-[#333333]">
+          <p className="text-xs text-[#71717A] mb-3 uppercase tracking-wider">
             Try an example
           </p>
           <div className="flex flex-wrap gap-2">
-            {EXAMPLE_PROMPTS.map((prompt, index) => (
+            {EXAMPLE_PROMPTS.map((prompt) => (
               <motion.button
                 key={prompt}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => onChange(prompt)}
                 disabled={isLoading || disabled}
-                className="text-xs px-3 py-1.5 bg-accent-orange/5 border border-accent-orange/15 rounded-full
-                           text-text-secondary hover:text-text-primary hover:border-accent-orange/40
-                           hover:bg-accent-orange/10 transition-all duration-200 disabled:opacity-50"
-                style={{ animationDelay: `${index * 0.05}s` }}
+                className="text-xs px-3 py-1.5 bg-[#111111] border border-[#333333] rounded-full
+                           text-[#A1A1AA] hover:text-white hover:border-[#444444]
+                           transition-all duration-200 disabled:opacity-50"
               >
                 {prompt}
               </motion.button>

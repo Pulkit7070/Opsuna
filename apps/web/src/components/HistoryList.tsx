@@ -34,19 +34,19 @@ export function HistoryList({ onSelect }: HistoryListProps) {
   }, []);
 
   return (
-    <div className="glass-card">
-      <div className="p-4 border-b border-border-subtle">
+    <div className="card">
+      <div className="p-4 border-b border-[#333333]">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-serif font-medium text-text-primary flex items-center gap-2">
-            <History className="h-5 w-5 text-accent-orange" />
-            Recent <span className="italic text-gradient">Executions</span>
+          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+            <History className="h-5 w-5 text-[#A1A1AA]" />
+            Recent Executions
           </h3>
           <motion.button
             whileHover={{ scale: 1.1, rotate: 180 }}
             whileTap={{ scale: 0.9 }}
             onClick={loadExecutions}
             disabled={isLoading}
-            className="p-1.5 rounded-lg hover:bg-surface-card-hover text-text-muted hover:text-text-primary transition-colors"
+            className="p-1.5 rounded-lg hover:bg-[#1a1a1a] text-[#71717A] hover:text-white transition-colors"
           >
             <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
           </motion.button>
@@ -56,9 +56,9 @@ export function HistoryList({ onSelect }: HistoryListProps) {
       <div className="p-2">
         {executions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <Clock className="h-8 w-8 text-text-muted mb-2" />
-            <p className="text-sm text-text-muted">No executions yet</p>
-            <p className="text-xs text-text-muted mt-1">Your history will appear here</p>
+            <Clock className="h-8 w-8 text-[#71717A] mb-2" />
+            <p className="text-sm text-[#71717A]">No executions yet</p>
+            <p className="text-xs text-[#71717A] mt-1">Your history will appear here</p>
           </div>
         ) : (
           <AnimatePresence>
@@ -70,21 +70,21 @@ export function HistoryList({ onSelect }: HistoryListProps) {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
                   onClick={() => onSelect?.(exec.id)}
-                  className="w-full text-left p-3 rounded-lg hover:bg-surface-card-hover
+                  className="w-full text-left p-3 rounded-lg hover:bg-[#1a1a1a]
                              transition-all duration-200 group flex items-center justify-between"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-text-primary truncate group-hover:text-accent-orange transition-colors">
+                    <p className="text-sm font-medium text-white truncate group-hover:text-white transition-colors">
                       {exec.prompt}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
                       <StatusBadge status={exec.status} />
-                      <span className="text-xs font-mono text-text-muted">
+                      <span className="text-xs text-[#71717A]">
                         {formatDate(exec.createdAt)}
                       </span>
                     </div>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-text-muted group-hover:text-accent-orange group-hover:translate-x-1 transition-all" />
+                  <ChevronRight className="h-4 w-4 text-[#71717A] group-hover:text-white group-hover:translate-x-1 transition-all" />
                 </motion.button>
               ))}
             </div>
