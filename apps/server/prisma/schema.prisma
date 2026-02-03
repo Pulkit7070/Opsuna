@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String      @id @default(uuid())
+  email      String      @unique
+  name       String?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  executions Execution[]
+}
+
+model Execution {
+  id          String       @id @default(uuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  prompt      String
+  status      String       @default("pending")
+  riskLevel   String?
+  plan        String?      // JSON stored as string
+  results     String?      // JSON stored as string
+  error       String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  completedAt DateTime?
+  toolCalls   ToolCall[]
+  auditLogs   AuditLog[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ToolCall {
+  id          String    @id @default(uuid())
+  executionId String
+  execution   Execution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  stepId      String
+  toolName    String
+  parameters  String    // JSON stored as string
+  status      String    @default("pending")
+  result      String?   // JSON stored as string
+  error       String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([executionId])
+  @@index([stepId])
+}
+
+model AuditLog {
+  id          String    @id @default(uuid())
+  executionId String?
+  execution   Execution? @relation(fields: [executionId], references: [id], onDelete: SetNull)
+  action      String
+  actor       String
+  details     String?   // JSON stored as string
+  createdAt   DateTime  @default(now())
+
+  @@index([executionId])
+  @@index([action])
+  @@index([createdAt])
+}
