@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useExecutionStore } from '@/store/execution';
+import { createClient } from '@/lib/supabase/client';
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001/ws';
+const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001/ws';
 
 export function useWebSocket() {
   const wsRef = useRef<WebSocket | null>(null);
@@ -13,13 +14,25 @@ export function useWebSocket() {
 
   const { updateStatus, addLog, addUIMessage, updateStepResult } = useExecutionStore();
 
-  const connect = useCallback(() => {
+  const connect = useCallback(async () => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       return;
     }
 
     try {
-      const ws = new WebSocket(WS_URL);
+      // Get auth token for WebSocket connection
+      let wsUrl = WS_BASE_URL;
+      try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          wsUrl = `${WS_BASE_URL}?token=${session.access_token}`;
+        }
+      } catch {
+        // Continue without auth token
+      }
+
+      const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
         console.log('[WebSocket] Connected');

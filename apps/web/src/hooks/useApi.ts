@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { apiClient } from '@/lib/api/client';
 
 interface ApiOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -32,22 +33,17 @@ export function useApi() {
     try {
       const { method = 'GET', body, headers = {} } = options;
 
-      const response = await fetch(endpoint, {
+      const data = await apiClient<T>(endpoint, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          ...headers,
-        },
+        headers,
         body: body ? JSON.stringify(body) : undefined,
       });
-
-      const data: ApiResponse<T> = await response.json();
 
       if (!data.success && data.error) {
         setError(data.error.message);
       }
 
-      return data;
+      return data as ApiResponse<T>;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'An error occurred';
       setError(message);
@@ -63,14 +59,12 @@ export function useApi() {
   return { request, isLoading, error, setError };
 }
 
-// Typed API functions
+// Typed API functions (use apiClient which auto-injects auth)
 export async function executePrompt(prompt: string) {
-  const response = await fetch('/api/execute', {
+  return apiClient('/api/execute', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt }),
   });
-  return response.json();
 }
 
 export async function confirmExecution(
@@ -78,29 +72,25 @@ export async function confirmExecution(
   confirmed: boolean,
   confirmPhrase?: string
 ) {
-  const response = await fetch(`/api/confirm/${executionId}`, {
+  return apiClient(`/api/confirm/${executionId}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ confirmed, confirmPhrase }),
   });
-  return response.json();
 }
 
 export async function getExecution(executionId: string) {
-  const response = await fetch(`/api/executions/${executionId}`);
-  return response.json();
+  return apiClient(`/api/executions/${executionId}`);
 }
 
 export async function getExecutions(page = 1, pageSize = 20) {
-  const response = await fetch(`/api/executions?page=${page}&pageSize=${pageSize}`);
-  return response.json();
+  return apiClient(`/api/executions`, {
+    params: { page, pageSize },
+  });
 }
 
 export async function rollbackExecution(executionId: string, reason?: string) {
-  const response = await fetch(`/api/rollback/${executionId}`, {
+  return apiClient(`/api/rollback/${executionId}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ reason }),
   });
-  return response.json();
 }
