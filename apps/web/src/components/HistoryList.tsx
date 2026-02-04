@@ -35,10 +35,10 @@ export function HistoryList({ onSelect }: HistoryListProps) {
 
   return (
     <div className="card">
-      <div className="p-4 border-b border-[#333333]">
+      <div className="p-4 border-b border-white/10">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-            <History className="h-5 w-5 text-[#A1A1AA]" />
+          <h3 className="font-serif text-lg text-[#F2F2F2] flex items-center gap-2">
+            <History className="h-4 w-4 text-[#D4AF37]" />
             Recent Executions
           </h3>
           <motion.button
@@ -46,7 +46,7 @@ export function HistoryList({ onSelect }: HistoryListProps) {
             whileTap={{ scale: 0.9 }}
             onClick={loadExecutions}
             disabled={isLoading}
-            className="p-1.5 rounded-lg hover:bg-[#1a1a1a] text-[#71717A] hover:text-white transition-colors"
+            className="p-1.5 rounded-lg hover:bg-white/5 text-[#71717A] hover:text-[#F2F2F2] transition-colors"
           >
             <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
           </motion.button>
@@ -58,7 +58,7 @@ export function HistoryList({ onSelect }: HistoryListProps) {
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <Clock className="h-8 w-8 text-[#71717A] mb-2" />
             <p className="text-sm text-[#71717A]">No executions yet</p>
-            <p className="text-xs text-[#71717A] mt-1">Your history will appear here</p>
+            <p className="text-xs text-[#71717A] mt-1 font-mono">Your history will appear here</p>
           </div>
         ) : (
           <AnimatePresence>
@@ -70,21 +70,21 @@ export function HistoryList({ onSelect }: HistoryListProps) {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
                   onClick={() => onSelect?.(exec.id)}
-                  className="w-full text-left p-3 rounded-lg hover:bg-[#1a1a1a]
+                  className="w-full text-left p-3 rounded-lg hover:bg-white/5
                              transition-all duration-200 group flex items-center justify-between"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-white truncate group-hover:text-white transition-colors">
+                    <p className="text-sm text-[#F2F2F2] truncate group-hover:text-[#D4AF37] transition-colors">
                       {exec.prompt}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
                       <StatusBadge status={exec.status} />
-                      <span className="text-xs text-[#71717A]">
+                      <span className="text-xs text-[#71717A] font-mono">
                         {formatDate(exec.createdAt)}
                       </span>
                     </div>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-[#71717A] group-hover:text-white group-hover:translate-x-1 transition-all" />
+                  <ChevronRight className="h-4 w-4 text-[#71717A] group-hover:text-[#D4AF37] group-hover:translate-x-1 transition-all" />
                 </motion.button>
               ))}
             </div>
@@ -98,9 +98,9 @@ export function HistoryList({ onSelect }: HistoryListProps) {
 function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { bg: string; text: string; border: string }> = {
     pending: { bg: 'bg-zinc-500/10', text: 'text-zinc-400', border: 'border-zinc-500/20' },
-    awaiting_confirmation: { bg: 'bg-yellow-500/10', text: 'text-yellow-400', border: 'border-yellow-500/20' },
+    awaiting_confirmation: { bg: 'bg-[#D4AF37]/10', text: 'text-[#D4AF37]', border: 'border-[#D4AF37]/20' },
     executing: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/20' },
-    completed: { bg: 'bg-green-500/10', text: 'text-green-400', border: 'border-green-500/20' },
+    completed: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20' },
     failed: { bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/20' },
     cancelled: { bg: 'bg-zinc-500/10', text: 'text-zinc-400', border: 'border-zinc-500/20' },
     rolled_back: { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/20' },

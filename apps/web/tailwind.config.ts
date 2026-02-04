@@ -9,28 +9,28 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Surface colors - PsudoKit dark theme
+        // Surface colors - Dark Academia
         surface: {
-          base: '#000000',
-          card: '#111111',
-          'card-hover': '#1a1a1a',
-          input: '#0A0A0A',
+          base: '#09090b',
+          card: '#121212',
+          'card-hover': '#18181b',
+          input: '#0E0E10',
         },
         // Border colors
         border: {
-          subtle: '#333333',
-          highlight: '#444444',
-          DEFAULT: '#333333',
+          subtle: '#27272a',
+          highlight: '#3f3f46',
+          DEFAULT: '#27272a',
         },
-        // Accent colors - minimal
+        // Gold accent colors
         accent: {
-          white: '#FFFFFF',
-          gray: '#A1A1AA',
-          dark: '#111111',
+          gold: '#D4AF37',
+          'gold-dim': 'rgba(212, 175, 55, 0.1)',
+          'gold-glow': 'rgba(212, 175, 55, 0.03)',
         },
         // Text colors
         text: {
-          primary: '#FFFFFF',
+          primary: '#FAFAFA',
           secondary: '#A1A1AA',
           muted: '#71717A',
         },
@@ -40,33 +40,34 @@ const config: Config = {
         },
         // Semantic colors
         background: '#000000',
-        foreground: '#FFFFFF',
+        foreground: '#FAFAFA',
         primary: {
-          DEFAULT: '#FFFFFF',
+          DEFAULT: '#D4AF37',
           foreground: '#000000',
         },
         secondary: {
-          DEFAULT: '#111111',
-          foreground: '#FFFFFF',
+          DEFAULT: '#121212',
+          foreground: '#FAFAFA',
         },
         destructive: {
           DEFAULT: '#ef4444',
           foreground: '#ffffff',
         },
         muted: {
-          DEFAULT: '#111111',
+          DEFAULT: '#121212',
           foreground: '#A1A1AA',
         },
         card: {
-          DEFAULT: '#111111',
-          foreground: '#FFFFFF',
+          DEFAULT: '#0E0E10',
+          foreground: '#FAFAFA',
         },
-        input: '#0A0A0A',
-        ring: '#FFFFFF',
+        input: '#0E0E10',
+        ring: '#D4AF37',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Consolas', 'monospace'],
+        serif: ['Newsreader', 'Playfair Display', 'Georgia', 'serif'],
+        sans: ['Geist', 'Inter', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Fira Code', 'Consolas', 'monospace'],
       },
       letterSpacing: {
         tighter: '-0.02em',
@@ -79,10 +80,13 @@ const config: Config = {
       boxShadow: {
         'subtle': '0 1px 2px rgba(0, 0, 0, 0.5)',
         'card': '0 4px 12px rgba(0, 0, 0, 0.4)',
-        'card-hover': '0 8px 24px rgba(0, 0, 0, 0.6)',
+        'card-hover': '0 20px 40px -10px rgba(0, 0, 0, 0.5)',
+        'vignette': 'inset 0 0 150px rgba(0,0,0,0.9)',
+        'gold-glow': '0 0 20px rgba(212, 175, 55, 0.3)',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gold-gradient': 'linear-gradient(135deg, #D4AF37, #B8860B)',
       },
       animation: {
         'blob': 'blob 7s infinite',
@@ -91,6 +95,7 @@ const config: Config = {
         'glow': 'glow 2s ease-in-out infinite alternate',
         'float': 'float 6s ease-in-out infinite',
         'shimmer': 'shimmer 2s linear infinite',
+        'gold-pulse': 'gold-pulse 2s ease-in-out infinite alternate',
       },
       keyframes: {
         blob: {
@@ -100,8 +105,8 @@ const config: Config = {
           '100%': { transform: 'translate(0px, 0px) scale(1)' },
         },
         glow: {
-          '0%': { boxShadow: '0 0 20px rgba(168, 85, 247, 0.3)' },
-          '100%': { boxShadow: '0 0 30px rgba(168, 85, 247, 0.5)' },
+          '0%': { boxShadow: '0 0 20px rgba(212, 175, 55, 0.2)' },
+          '100%': { boxShadow: '0 0 30px rgba(212, 175, 55, 0.4)' },
         },
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },
@@ -110,6 +115,10 @@ const config: Config = {
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
+        },
+        'gold-pulse': {
+          '0%': { opacity: '0.5' },
+          '100%': { opacity: '1' },
         },
       },
     },
