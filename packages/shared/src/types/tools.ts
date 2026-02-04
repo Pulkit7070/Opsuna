@@ -1,5 +1,7 @@
 import { RiskLevel } from './execution';
 
+export type ToolSource = 'local' | 'composio';
+
 export interface Tool {
   name: string;
   displayName: string;
@@ -8,9 +10,24 @@ export interface Tool {
   riskLevel: RiskLevel;
   parameters: ToolParameter[];
   rollbackSupported: boolean;
+  source: ToolSource;
+  composioActionName?: string;
+  appName?: string;
+  logo?: string;
 }
 
-export type ToolCategory = 'deployment' | 'testing' | 'notification' | 'version_control' | 'database' | 'infrastructure';
+export type ToolCategory =
+  | 'deployment'
+  | 'testing'
+  | 'notification'
+  | 'version_control'
+  | 'database'
+  | 'infrastructure'
+  | 'communication'
+  | 'productivity'
+  | 'crm'
+  | 'analytics'
+  | 'other';
 
 export interface ToolParameter {
   name: string;
