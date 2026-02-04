@@ -1,10 +1,16 @@
-import { Tool, ToolCategory } from '@opsuna/shared';
+import { Tool, ToolCategory, ToolSource } from '@opsuna/shared';
 
 class ToolRegistry {
   private tools: Map<string, Tool> = new Map();
 
   register(tool: Tool): void {
     this.tools.set(tool.name, tool);
+  }
+
+  registerMany(tools: Tool[]): void {
+    for (const tool of tools) {
+      this.tools.set(tool.name, tool);
+    }
   }
 
   get(name: string): Tool | undefined {
@@ -18,11 +24,27 @@ class ToolRegistry {
   listByCategory(category: ToolCategory): Tool[] {
     return this.list().filter(t => t.category === category);
   }
+
+  listBySource(source: ToolSource): Tool[] {
+    return this.list().filter(t => t.source === source);
+  }
+
+  clear(source?: ToolSource): void {
+    if (!source) {
+      this.tools.clear();
+      return;
+    }
+    for (const [name, tool] of this.tools) {
+      if (tool.source === source) {
+        this.tools.delete(name);
+      }
+    }
+  }
 }
 
 export const registry = new ToolRegistry();
 
-// Register all available tools
+// Register local (mock) tools
 registry.register({
   name: 'deploy_staging',
   displayName: 'Deploy to Staging',
@@ -30,6 +52,7 @@ registry.register({
   category: 'deployment',
   riskLevel: 'HIGH',
   rollbackSupported: true,
+  source: 'local',
   parameters: [
     { name: 'branch', type: 'string', description: 'Branch to deploy', required: true },
     { name: 'environment', type: 'string', description: 'Target environment', required: true, enum: ['staging'] },
@@ -43,6 +66,7 @@ registry.register({
   category: 'testing',
   riskLevel: 'LOW',
   rollbackSupported: false,
+  source: 'local',
   parameters: [
     { name: 'environment', type: 'string', description: 'Environment to test', required: true },
     { name: 'suite', type: 'string', description: 'Test suite to run', required: false, default: 'smoke' },
@@ -56,6 +80,7 @@ registry.register({
   category: 'version_control',
   riskLevel: 'MEDIUM',
   rollbackSupported: false,
+  source: 'local',
   parameters: [
     { name: 'title', type: 'string', description: 'PR title', required: true },
     { name: 'body', type: 'string', description: 'PR description', required: true },
@@ -71,6 +96,7 @@ registry.register({
   category: 'notification',
   riskLevel: 'LOW',
   rollbackSupported: false,
+  source: 'local',
   parameters: [
     { name: 'channel', type: 'string', description: 'Slack channel', required: true },
     { name: 'message', type: 'string', description: 'Message content', required: true },
@@ -84,6 +110,7 @@ registry.register({
   category: 'deployment',
   riskLevel: 'HIGH',
   rollbackSupported: false,
+  source: 'local',
   parameters: [
     { name: 'environment', type: 'string', description: 'Environment to rollback', required: true },
     { name: 'version', type: 'string', description: 'Version to rollback to', required: false },

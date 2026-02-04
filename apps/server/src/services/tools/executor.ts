@@ -11,7 +11,8 @@ interface ExecutorCallbacks {
 
 export async function executeSteps(
   steps: ExecutionStep[],
-  callbacks: ExecutorCallbacks
+  callbacks: ExecutorCallbacks,
+  userId?: string
 ): Promise<ToolCallResult[]> {
   const results: ToolCallResult[] = [];
 
@@ -38,7 +39,8 @@ export async function executeSteps(
         callId,
         step.toolName,
         step.parameters,
-        onLog
+        onLog,
+        userId
       );
 
       const completedAt = new Date();

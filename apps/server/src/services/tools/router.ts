@@ -1,5 +1,6 @@
 import { ToolResult, ToolLog } from '@opsuna/shared';
 import { registry } from './registry';
+import { executeComposioAction } from './composio';
 import {
   deployStaging,
   runSmokeTests,
@@ -14,7 +15,7 @@ type ToolImplementation = (
   onLog: (log: ToolLog) => void
 ) => Promise<ToolResult>;
 
-const implementations: Record<string, ToolImplementation> = {
+const localImplementations: Record<string, ToolImplementation> = {
   deploy_staging: deployStaging as ToolImplementation,
   run_smoke_tests: runSmokeTests as ToolImplementation,
   create_github_pr: createGithubPR as ToolImplementation,
@@ -26,7 +27,8 @@ export async function routeToolCall(
   callId: string,
   toolName: string,
   params: Record<string, unknown>,
-  onLog: (log: ToolLog) => void
+  onLog: (log: ToolLog) => void,
+  userId?: string
 ): Promise<ToolResult> {
   const tool = registry.get(toolName);
 
@@ -45,7 +47,28 @@ export async function routeToolCall(
     };
   }
 
-  const implementation = implementations[toolName];
+  // Route to Composio executor for Composio-sourced tools
+  if (tool.source === 'composio' && tool.composioActionName) {
+    if (!userId) {
+      return {
+        callId,
+        toolName,
+        success: false,
+        error: {
+          code: 'USER_REQUIRED',
+          message: 'User ID is required to execute Composio tools',
+          recoverable: false,
+        },
+        duration: 0,
+        logs: [],
+      };
+    }
+
+    return executeComposioAction(callId, tool.composioActionName, params, userId, onLog);
+  }
+
+  // Route to local implementation
+  const implementation = localImplementations[toolName];
 
   if (!implementation) {
     return {
