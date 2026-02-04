@@ -30,7 +30,7 @@ router.post(
         return next(createError('Execution not found or not rollback-able', 404, 'NOT_FOUND'));
       }
 
-      const plan: ExecutionPlan = JSON.parse(execution.plan!);
+      const plan = execution.plan as unknown as ExecutionPlan;
 
       if (!plan.rollbackSteps || plan.rollbackSteps.length === 0) {
         return next(createError('No rollback steps available', 400, 'NO_ROLLBACK'));
@@ -47,7 +47,7 @@ router.post(
           executionId: id,
           action: 'ROLLBACK_STARTED',
           actor: userId,
-          details: JSON.stringify({ reason }),
+          details: { reason },
         },
       });
 
@@ -97,7 +97,7 @@ router.post(
           executionId: id,
           action: allSucceeded ? 'ROLLBACK_COMPLETED' : 'ROLLBACK_FAILED',
           actor: userId,
-          details: JSON.stringify({ rolledBackSteps: results.filter(r => r.status === 'success').map(r => r.stepId) }),
+          details: { rolledBackSteps: results.filter(r => r.status === 'success').map(r => r.stepId) },
         },
       });
 

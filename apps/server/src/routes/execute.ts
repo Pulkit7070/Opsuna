@@ -29,7 +29,7 @@ router.post(
           prompt,
           status: 'awaiting_confirmation',
           riskLevel: plan.riskLevel,
-          plan: JSON.stringify(plan),
+          plan: plan as unknown as Record<string, unknown>,
         },
       });
 
@@ -39,7 +39,7 @@ router.post(
           executionId: execution.id,
           action: 'PLAN_GENERATED',
           actor: userId,
-          details: JSON.stringify({ prompt, riskLevel: plan.riskLevel }),
+          details: { prompt, riskLevel: plan.riskLevel },
         },
       });
 

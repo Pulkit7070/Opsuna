@@ -1,25 +1,35 @@
-export const SYSTEM_PROMPT = `You are an AI assistant that helps users automate DevOps tasks safely. Your job is to analyze user requests and create execution plans using available tools.
+import { Tool } from '@opsuna/shared';
+import { registry } from '../tools/registry';
+
+/**
+ * Build a dynamic tool description string from the registry.
+ */
+export function buildToolsDescription(tools?: Tool[]): string {
+  const allTools = tools || registry.list();
+
+  if (allTools.length === 0) {
+    return 'No tools are currently available.';
+  }
+
+  return allTools.map((tool, i) => {
+    const params = tool.parameters.map(p => {
+      const req = p.required ? '' : '?';
+      const enumStr = p.enum ? ` (one of: ${p.enum.join(', ')})` : '';
+      return `     ${p.name}${req}: ${p.type} - ${p.description}${enumStr}`;
+    }).join('\n');
+
+    const source = tool.source === 'composio' ? ' [Composio]' : '';
+
+    return `${i + 1}. ${tool.name}${source} - ${tool.description}
+   - Risk: ${tool.riskLevel}
+   - Parameters:\n${params}`;
+  }).join('\n\n');
+}
+
+const BASE_SYSTEM_PROMPT = `You are an AI assistant that helps users automate tasks safely. Your job is to analyze user requests and create execution plans using available tools.
 
 AVAILABLE TOOLS:
-1. deploy_staging - Deploy code to staging environment
-   - Parameters: { branch: string, environment: "staging" }
-   - Risk: HIGH (modifies infrastructure)
-
-2. run_smoke_tests - Run automated smoke tests
-   - Parameters: { environment: string, suite?: string }
-   - Risk: LOW (read-only operation)
-
-3. create_github_pr - Create a GitHub pull request
-   - Parameters: { title: string, body: string, base: string, head: string }
-   - Risk: MEDIUM (creates PR but doesn't merge)
-
-4. post_slack_message - Post a message to Slack
-   - Parameters: { channel: string, message: string }
-   - Risk: LOW (notification only)
-
-5. rollback_deploy - Rollback a deployment
-   - Parameters: { environment: string, version?: string }
-   - Risk: HIGH (modifies infrastructure)
+{TOOLS_DESCRIPTION}
 
 RISK LEVELS:
 - LOW: Safe operations with no side effects
@@ -62,6 +72,11 @@ RULES:
 5. ONLY use tools from the available list
 6. ALWAYS respond with valid JSON only, no other text`;
 
+export function getSystemPrompt(tools?: Tool[]): string {
+  const toolsDescription = buildToolsDescription(tools);
+  return BASE_SYSTEM_PROMPT.replace('{TOOLS_DESCRIPTION}', toolsDescription);
+}
+
 export const ERROR_PROMPT = `The user's request could not be processed. Respond with this JSON:
 {
   "error": true,
@@ -69,6 +84,9 @@ export const ERROR_PROMPT = `The user's request could not be processed. Respond 
   "suggestion": "How the user can fix their request"
 }`;
 
-export function buildPrompt(userPrompt: string): string {
-  return `${SYSTEM_PROMPT}\n\nUser request: ${userPrompt}\n\nRespond with the execution plan JSON:`;
+export function buildPrompt(userPrompt: string, tools?: Tool[]): string {
+  return `${getSystemPrompt(tools)}\n\nUser request: ${userPrompt}\n\nRespond with the execution plan JSON:`;
 }
+
+// Backward compat
+export const SYSTEM_PROMPT = getSystemPrompt();

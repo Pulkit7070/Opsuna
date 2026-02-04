@@ -34,7 +34,7 @@ router.post(
         return next(createError('Execution not found or not awaiting confirmation', 404, 'NOT_FOUND'));
       }
 
-      const plan: ExecutionPlan = JSON.parse(execution.plan!);
+      const plan = execution.plan as unknown as ExecutionPlan;
 
       // For HIGH risk, verify confirm phrase
       if (plan.riskLevel === 'HIGH') {
@@ -209,7 +209,7 @@ async function executeInBackground(
         eventEmitter.emitLog({ executionId, entry: logEntry });
         console.error(`[Executor] Step ${stepId} error:`, error);
       },
-    });
+    }, userId);
 
     // Check if all steps succeeded
     const allSucceeded = results.every(r => r.status === 'success');
@@ -220,7 +220,7 @@ async function executeInBackground(
       where: { id: executionId },
       data: {
         status: finalStatus,
-        results: JSON.stringify(results),
+        results: results as unknown as Record<string, unknown>[],
         completedAt: new Date(),
         updatedAt: new Date(),
         error: allSucceeded ? null : results.find(r => r.error)?.error || 'Execution failed',
@@ -232,7 +232,7 @@ async function executeInBackground(
         executionId,
         action: allSucceeded ? 'EXECUTION_COMPLETED' : 'EXECUTION_FAILED',
         actor: userId,
-        details: JSON.stringify({ stepsCompleted: results.filter(r => r.status === 'success').length }),
+        details: { stepsCompleted: results.filter(r => r.status === 'success').length },
       },
     });
 

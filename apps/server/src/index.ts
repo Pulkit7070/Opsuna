@@ -3,7 +3,6 @@ import { app } from './app';
 import { config } from './lib/config';
 import { prisma } from './lib/prisma';
 import { wsManager } from './services/events';
-import { MOCK_USER } from './middleware/auth';
 
 async function bootstrap() {
   // Create HTTP server
@@ -11,22 +10,6 @@ async function bootstrap() {
 
   // Initialize WebSocket
   wsManager.initialize(server);
-
-  // Ensure demo user exists
-  try {
-    await prisma.user.upsert({
-      where: { id: MOCK_USER.id },
-      update: {},
-      create: {
-        id: MOCK_USER.id,
-        email: MOCK_USER.email,
-        name: MOCK_USER.name,
-      },
-    });
-    console.log('[DB] Demo user initialized');
-  } catch (error) {
-    console.error('[DB] Failed to initialize demo user:', error);
-  }
 
   // Start server
   server.listen(config.port, () => {
@@ -40,7 +23,9 @@ async function bootstrap() {
 ║   Health:    http://localhost:${config.port}/health               ║
 ║                                                           ║
 ║   Environment: ${config.nodeEnv.padEnd(40)}║
-║   AI Provider: ${config.geminiApiKey ? 'Google Gemini'.padEnd(40) : 'Mock (no API key)'.padEnd(40)}║
+║   AI Provider: ${(config.geminiApiKey ? 'Google Gemini' : 'Mock (no API key)').padEnd(40)}║
+║   Auth:        ${(config.supabaseUrl ? 'Supabase' : 'Mock (dev mode)').padEnd(40)}║
+║   Tools:       ${(config.composioApiKey ? 'Composio + Local' : 'Local only').padEnd(40)}║
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝
     `);

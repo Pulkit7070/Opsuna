@@ -36,7 +36,7 @@ router.get(
       ]);
 
       const summaries = executions.map(exec => {
-        const plan: ExecutionPlan | null = exec.plan ? JSON.parse(exec.plan) : null;
+        const plan = exec.plan as ExecutionPlan | null;
         return {
           id: exec.id,
           prompt: exec.prompt,
@@ -91,8 +91,8 @@ router.get(
         return next(createError('Execution not found', 404, 'NOT_FOUND'));
       }
 
-      const plan: ExecutionPlan | null = execution.plan ? JSON.parse(execution.plan) : null;
-      const results: ToolCallResult[] = execution.results ? JSON.parse(execution.results) : [];
+      const plan = execution.plan as ExecutionPlan | null;
+      const results = (execution.results as ToolCallResult[] | null) || [];
 
       res.json({
         success: true,
