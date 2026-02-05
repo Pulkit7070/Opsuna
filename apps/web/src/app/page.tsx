@@ -10,8 +10,15 @@ import { ExecutionPanel } from '@/components/ExecutionPanel';
 import { HistoryList } from '@/components/HistoryList';
 import { ToastContainer } from '@/components/Toast';
 import { Zap, Command, ChevronDown, ChevronUp, Terminal, Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import { useTools } from '@/hooks/useTools';
 
-const NAV_ITEMS = ['Dashboard', 'Workflows', 'Tools', 'Settings'];
+const NAV_ITEMS = [
+  { label: 'Dashboard', href: '/' },
+  { label: 'Workflows', href: '#' },
+  { label: 'Tools', href: '/tools' },
+  { label: 'Settings', href: '#' },
+];
 
 const FAQ_ITEMS = [
   {
@@ -49,7 +56,7 @@ const itemVariants = {
     opacity: 1,
     y: 0,
     filter: 'blur(0px)',
-    transition: { duration: 0.5, ease: 'easeOut' },
+    transition: { duration: 0.5, ease: 'easeOut' as const },
   },
 };
 
@@ -105,6 +112,7 @@ export default function Home() {
 
   const { isConnected } = useWebSocket();
   const logs = useLogs();
+  const { allTools } = useTools();
 
   const handleCloseConfirmDialog = () => {};
 
@@ -134,13 +142,13 @@ export default function Home() {
               className="hidden md:flex items-center gap-8"
             >
               {NAV_ITEMS.map((item) => (
-                <a
-                  key={item}
-                  href="#"
+                <Link
+                  key={item.label}
+                  href={item.href}
                   className="text-sm text-[#A1A1AA] hover:text-[#F2F2F2] transition-colors"
                 >
-                  {item}
-                </a>
+                  {item.label}
+                </Link>
               ))}
             </motion.nav>
 
@@ -250,17 +258,32 @@ export default function Home() {
 
               {/* Quick Actions */}
               <div className="card p-6">
-                <h3 className="font-serif text-lg text-[#F2F2F2] mb-4 flex items-center gap-2">
-                  <Terminal className="h-4 w-4 text-[#D4AF37]" />
-                  Available Tools
-                </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-serif text-lg text-[#F2F2F2] flex items-center gap-2">
+                    <Terminal className="h-4 w-4 text-[#D4AF37]" />
+                    Available Tools
+                  </h3>
+                  <Link href="/tools" className="text-xs text-[#D4AF37] hover:underline">
+                    View all
+                  </Link>
+                </div>
                 <div className="space-y-2">
-                  {['deploy_staging', 'run_tests', 'create_pr', 'notify_slack'].map((tool) => (
+                  {(allTools.length > 0 ? allTools.slice(0, 6) : [
+                    { name: 'deploy_staging', source: 'local' },
+                    { name: 'run_smoke_tests', source: 'local' },
+                    { name: 'create_github_pr', source: 'local' },
+                    { name: 'post_slack_message', source: 'local' },
+                  ]).map((tool) => (
                     <div
-                      key={tool}
-                      className="px-3 py-2 rounded-md bg-white/5 border border-white/5 hover:border-[#D4AF37]/30 transition-colors"
+                      key={tool.name}
+                      className="px-3 py-2 rounded-md bg-white/5 border border-white/5 hover:border-[#D4AF37]/30 transition-colors flex items-center justify-between"
                     >
-                      <span className="font-mono text-xs text-[#A1A1AA]">{tool}</span>
+                      <span className="font-mono text-xs text-[#A1A1AA]">{tool.name}</span>
+                      <span className={`text-[10px] font-mono uppercase ${
+                        tool.source === 'composio' ? 'text-[#D4AF37]' : 'text-[#71717A]'
+                      }`}>
+                        {tool.source}
+                      </span>
                     </div>
                   ))}
                 </div>

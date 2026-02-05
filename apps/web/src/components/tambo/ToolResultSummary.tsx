@@ -93,7 +93,7 @@ function ResultCard({ result, index }: { result: ToolCallResult; index: number }
         <p className="text-sm text-red-400 mt-2 ml-7">{result.error}</p>
       )}
 
-      {result.result && typeof result.result === 'object' && (
+      {result.result != null && typeof result.result === 'object' && (
         <div className="mt-2 ml-7">
           <details className="text-sm">
             <summary className="cursor-pointer text-text-muted hover:text-text-secondary transition-colors">

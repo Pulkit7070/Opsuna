@@ -39,9 +39,9 @@ export function useExecution() {
     setError(null);
 
     try {
-      const response = await executePrompt(prompt);
+      const response = await executePrompt(prompt) as { success: boolean; data?: { executionId: string; plan: import('@opsuna/shared').ExecutionPlan }; error?: { message: string } };
 
-      if (response.success) {
+      if (response.success && response.data) {
         const { executionId, plan } = response.data;
         startExecution(executionId, plan);
         subscribe(executionId);

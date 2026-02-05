@@ -18,8 +18,8 @@ export function HistoryList({ onSelect }: HistoryListProps) {
   const loadExecutions = async () => {
     setIsLoading(true);
     try {
-      const response = await getExecutions();
-      if (response.success) {
+      const response = await getExecutions() as { success: boolean; data?: { executions: ExecutionSummary[] } };
+      if (response.success && response.data) {
         setExecutions(response.data.executions);
       }
     } catch (err) {
