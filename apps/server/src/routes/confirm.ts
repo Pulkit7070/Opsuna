@@ -4,15 +4,17 @@ import {
   ExecutionIdParamSchema,
   ExecutionPlan,
   MCPUIMessage,
-  ToolCallResult,
   LogEntry,
 } from '@opsuna/shared';
 import { v4 as uuid } from 'uuid';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { validateBody, validateParams } from '../middleware';
 import { createError } from '../middleware/errorHandler';
 import { executeSteps } from '../services/tools';
 import { eventEmitter } from '../services/events';
+import { storeMemory } from '../services/memory/store';
+import { recordExecutionOutcomes, ToolOutcome } from '../services/memory/patterns';
 
 const router = Router();
 
@@ -220,7 +222,7 @@ async function executeInBackground(
       where: { id: executionId },
       data: {
         status: finalStatus,
-        results: results as unknown as Record<string, unknown>[],
+        results: results as unknown as Prisma.InputJsonValue,
         completedAt: new Date(),
         updatedAt: new Date(),
         error: allSucceeded ? null : results.find(r => r.error)?.error || 'Execution failed',
@@ -235,6 +237,38 @@ async function executeInBackground(
         details: { stepsCompleted: results.filter(r => r.status === 'success').length },
       },
     });
+
+    // Store execution result in memory (async, non-blocking)
+    const executionSummary = `Execution "${plan.summary}" ${allSucceeded ? 'completed successfully' : 'failed'}. ` +
+      `Risk level: ${plan.riskLevel}. ` +
+      `Steps: ${results.filter(r => r.status === 'success').length}/${results.length} succeeded. ` +
+      `Tools used: ${results.map(r => r.toolName).join(', ')}.`;
+
+    storeMemory({
+      userId,
+      type: 'execution',
+      content: executionSummary,
+      metadata: {
+        executionId,
+        prompt: plan.summary,
+        riskLevel: plan.riskLevel,
+        status: finalStatus,
+        stepsCompleted: results.filter(r => r.status === 'success').length,
+        totalSteps: results.length,
+        toolsUsed: results.map(r => r.toolName),
+      },
+    }).catch((err) => console.warn('[Confirm] Failed to store execution memory:', err));
+
+    // Record tool outcomes as patterns (async, non-blocking)
+    const toolOutcomes: ToolOutcome[] = results.map((r) => ({
+      toolName: r.toolName,
+      success: r.status === 'success',
+      error: r.error,
+      result: r.result,
+    }));
+
+    recordExecutionOutcomes(userId, toolOutcomes)
+      .catch((err) => console.warn('[Confirm] Failed to record tool patterns:', err));
 
     eventEmitter.emitStatus({ executionId, status: finalStatus });
 
@@ -266,7 +300,7 @@ async function executeInBackground(
           type: 'error_display',
           title: 'Execution Failed',
           message: results.find(r => r.error)?.error || 'One or more steps failed',
-          recoverable: plan.rollbackSteps && plan.rollbackSteps.length > 0,
+          recoverable: !!(plan.rollbackSteps && plan.rollbackSteps.length > 0),
           suggestedActions: plan.rollbackSteps
             ? ['Review logs', 'Attempt rollback']
             : ['Review logs', 'Retry execution'],

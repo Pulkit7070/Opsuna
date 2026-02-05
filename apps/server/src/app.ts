@@ -14,6 +14,7 @@ import {
   rollbackRouter,
   healthRouter,
   toolsRouter,
+  memoryRouter,
 } from './routes';
 
 const app = express();
@@ -37,6 +38,7 @@ app.use('/api/executions', executionsRouter);
 app.use('/api/confirm', confirmRouter);
 app.use('/api/rollback', rollbackRouter);
 app.use('/api/tools', toolsRouter);
+app.use('/api/memory', memoryRouter);
 app.use('/health', healthRouter);
 
 // Error handling

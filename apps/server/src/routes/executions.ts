@@ -12,7 +12,8 @@ router.get(
   validateQuery(PaginationQuerySchema),
   async (req, res, next) => {
     try {
-      const { page, pageSize } = req.query as { page: number; pageSize: number };
+      const page = Number(req.query.page) || 1;
+      const pageSize = Number(req.query.pageSize) || 10;
       const userId = req.user!.id;
       const skip = (page - 1) * pageSize;
 

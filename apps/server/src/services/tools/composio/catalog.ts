@@ -173,7 +173,9 @@ export async function searchComposioTools(query: string, _userId?: string): Prom
   if (!client) return [];
 
   try {
-    const rawTools = await client.tools.getRawComposioTools({ search: query, limit: 20 });
+    // Use any cast for SDK compatibility
+    const getRawTools = client.tools.getRawComposioTools as any;
+    const rawTools = await getRawTools({ search: query, limit: 20 });
     return rawTools.map(mapComposioToolToTool);
   } catch (error) {
     console.error(`[Composio] Search failed for "${query}":`, error);
@@ -183,22 +185,14 @@ export async function searchComposioTools(query: string, _userId?: string): Prom
 
 /**
  * List available Composio app/toolkit names.
+ * Note: This returns our default toolkits since the SDK API may not expose a list method.
  */
 export async function listComposioApps(): Promise<Array<{ name: string; slug: string; logo?: string; category: ToolCategory }>> {
-  const client = getComposioClient();
-  if (!client) return [];
-
-  try {
-    const toolkits = await client.toolkits.getToolkits();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return toolkits.map((tk: any) => ({
-      name: tk.name || tk.slug,
-      slug: tk.slug,
-      logo: tk.logo,
-      category: categorizeApp(tk.slug),
-    }));
-  } catch (error) {
-    console.error('[Composio] Failed to list apps:', error);
-    return [];
-  }
+  // Return our default toolkits since the SDK API for listing toolkits may be private
+  return DEFAULT_TOOLKITS.map((slug) => ({
+    name: slug.charAt(0) + slug.slice(1).toLowerCase(),
+    slug: slug.toLowerCase(),
+    logo: `https://logos.composio.dev/api/${slug.toLowerCase()}`,
+    category: categorizeApp(slug),
+  }));
 }

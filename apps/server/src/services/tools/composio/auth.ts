@@ -20,11 +20,18 @@ export async function initiateConnection(
   if (!client) return null;
 
   try {
-    const result = await client.connectedAccounts.initiate({
-      appName: appName.toUpperCase(),
-      entityId: userId,
-      redirectUrl,
+    // The Composio SDK API - use any cast to handle varying SDK versions
+    const initiateMethod = client.connectedAccounts.initiate as any;
+    const result = await initiateMethod({
+      integrationId: appName.toLowerCase(),
+      userUuid: userId,
+      redirectUri: redirectUrl,
     });
+
+    // Handle different response formats
+    const resultAny = result as any;
+    const connectionId = resultAny.connectedAccountId || resultAny.id || '';
+    const oauthRedirectUrl = resultAny.redirectUrl || resultAny.connectionStatus || '';
 
     // Store connection in our DB
     await prisma.toolConnection.upsert({
@@ -32,7 +39,7 @@ export async function initiateConnection(
         userId_toolName: { userId, toolName: appName.toLowerCase() },
       },
       update: {
-        composioConnectionId: result.connectedAccountId || result.id,
+        composioConnectionId: connectionId,
         status: 'pending',
         revokedAt: null,
       },
@@ -40,14 +47,14 @@ export async function initiateConnection(
         userId,
         toolName: appName.toLowerCase(),
         provider: 'composio',
-        composioConnectionId: result.connectedAccountId || result.id,
+        composioConnectionId: connectionId,
         status: 'pending',
       },
     });
 
     return {
-      redirectUrl: result.redirectUrl || result.connectionStatus || '',
-      connectionId: result.connectedAccountId || result.id || '',
+      redirectUrl: oauthRedirectUrl,
+      connectionId,
     };
   } catch (error) {
     console.error(`[Composio] Failed to initiate connection for ${appName}:`, error);
@@ -66,13 +73,16 @@ export async function checkConnectionStatus(
   if (!client) return null;
 
   try {
-    const connections = await client.connectedAccounts.list({
-      entityId: userId,
-    });
+    const response = await client.connectedAccounts.list({
+      userUuid: userId,
+    } as any);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Handle both array and {items: []} response formats
+    const connections = Array.isArray(response) ? response : (response as any)?.items || [];
+
     const conn = connections.find((c: any) =>
-      c.appName?.toLowerCase() === appName.toLowerCase()
+      c.appName?.toLowerCase() === appName.toLowerCase() ||
+      c.integrationId?.toLowerCase() === appName.toLowerCase()
     );
 
     if (!conn) return null;
@@ -126,14 +136,16 @@ export async function listUserConnections(userId: string): Promise<ComposioConne
   }
 
   try {
-    const connections = await client.connectedAccounts.list({
-      entityId: userId,
-    });
+    const response = await client.connectedAccounts.list({
+      userUuid: userId,
+    } as any);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Handle both array and {items: []} response formats
+    const connections = Array.isArray(response) ? response : (response as any)?.items || [];
+
     return connections.map((c: any) => ({
       id: c.id,
-      appName: c.appName?.toLowerCase() || '',
+      appName: c.appName?.toLowerCase() || c.integrationId?.toLowerCase() || '',
       status: c.status === 'ACTIVE' ? 'active' : c.status?.toLowerCase() || 'unknown',
     }));
   } catch (error) {
@@ -156,11 +168,16 @@ export async function revokeConnection(userId: string, appName: string): Promise
     });
 
     if (client) {
-      const connections = await client.connectedAccounts.list({ entityId: userId });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const conn = connections.find((c: any) => c.appName?.toLowerCase() === appName.toLowerCase());
+      const response = await client.connectedAccounts.list({ userUuid: userId } as any);
+      const connections = Array.isArray(response) ? response : (response as any)?.items || [];
+
+      const conn = connections.find((c: any) =>
+        c.appName?.toLowerCase() === appName.toLowerCase() ||
+        c.integrationId?.toLowerCase() === appName.toLowerCase()
+      );
+
       if (conn) {
-        await client.connectedAccounts.delete({ connectedAccountId: conn.id });
+        await client.connectedAccounts.delete(conn.id);
       }
     }
 

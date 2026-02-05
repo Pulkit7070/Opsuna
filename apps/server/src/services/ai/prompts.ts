@@ -1,5 +1,8 @@
 import { Tool } from '@opsuna/shared';
 import { registry } from '../tools/registry';
+import { searchMemory } from '../memory/store';
+import { getRecentContext } from '../memory/conversation';
+import { getPatternContext } from '../memory/patterns';
 
 /**
  * Build a dynamic tool description string from the registry.
@@ -86,6 +89,130 @@ export const ERROR_PROMPT = `The user's request could not be processed. Respond 
 
 export function buildPrompt(userPrompt: string, tools?: Tool[]): string {
   return `${getSystemPrompt(tools)}\n\nUser request: ${userPrompt}\n\nRespond with the execution plan JSON:`;
+}
+
+/**
+ * Build a memory-enhanced prompt with user context.
+ * Injects relevant memories, conversation history, and tool patterns.
+ */
+export async function buildPromptWithMemory(
+  userPrompt: string,
+  userId: string,
+  tools?: Tool[]
+): Promise<string> {
+  const parts: string[] = [getSystemPrompt(tools)];
+
+  // Add memory context section
+  const memoryContext = await buildMemoryContext(userId, userPrompt);
+  if (memoryContext) {
+    parts.push('\nCONTEXT FROM MEMORY:');
+    parts.push(memoryContext);
+  }
+
+  parts.push(`\nUser request: ${userPrompt}`);
+  parts.push('\nRespond with the execution plan JSON:');
+
+  return parts.join('\n');
+}
+
+/**
+ * Build memory context for prompt injection.
+ */
+export async function buildMemoryContext(
+  userId: string,
+  query: string
+): Promise<string | null> {
+  const contextParts: string[] = [];
+
+  try {
+    // Get recent conversation context (last 5 messages)
+    const conversationContext = await getRecentContext(userId, 5);
+    if (conversationContext) {
+      contextParts.push('Recent conversation:');
+      contextParts.push(conversationContext);
+    }
+
+    // Get tool usage patterns
+    const patternContext = await getPatternContext(userId);
+    if (patternContext) {
+      contextParts.push('');
+      contextParts.push(patternContext);
+    }
+
+    // Search for relevant past memories
+    const relevantMemories = await searchMemory(userId, query, {
+      type: 'execution',
+      limit: 3,
+      minSimilarity: 0.6,
+    });
+
+    if (relevantMemories.length > 0) {
+      contextParts.push('');
+      contextParts.push('Relevant past executions:');
+      for (const memory of relevantMemories) {
+        const summary = memory.content.length > 300
+          ? memory.content.slice(0, 300) + '...'
+          : memory.content;
+        const similarity = memory.similarity
+          ? ` (${(memory.similarity * 100).toFixed(0)}% relevant)`
+          : '';
+        contextParts.push(`- ${summary}${similarity}`);
+      }
+    }
+
+    if (contextParts.length === 0) {
+      return null;
+    }
+
+    return contextParts.join('\n');
+  } catch (error) {
+    console.warn('[Prompts] Failed to build memory context:', error);
+    return null;
+  }
+}
+
+/**
+ * Get memory context preview (for frontend display).
+ */
+export async function getMemoryContextPreview(
+  userId: string,
+  query: string
+): Promise<{
+  hasContext: boolean;
+  conversationCount: number;
+  relevantMemoryCount: number;
+  patternSummary: string | null;
+}> {
+  try {
+    const conversationContext = await getRecentContext(userId, 5);
+    const patternContext = await getPatternContext(userId);
+    const relevantMemories = await searchMemory(userId, query, {
+      type: 'execution',
+      limit: 3,
+      minSimilarity: 0.6,
+    });
+
+    const conversationCount = conversationContext
+      ? conversationContext.split('\n\n').filter((s) => s.trim()).length
+      : 0;
+
+    return {
+      hasContext: !!(conversationContext || patternContext || relevantMemories.length > 0),
+      conversationCount,
+      relevantMemoryCount: relevantMemories.length,
+      patternSummary: patternContext
+        ? patternContext.split('\n').slice(0, 3).join('\n')
+        : null,
+    };
+  } catch (error) {
+    console.warn('[Prompts] Failed to get memory preview:', error);
+    return {
+      hasContext: false,
+      conversationCount: 0,
+      relevantMemoryCount: 0,
+      patternSummary: null,
+    };
+  }
 }
 
 // Backward compat

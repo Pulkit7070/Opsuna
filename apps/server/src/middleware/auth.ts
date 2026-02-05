@@ -18,6 +18,10 @@ interface AuthUser {
   avatarUrl: string | null;
 }
 
+export interface AuthenticatedRequest extends Request {
+  user: AuthUser;
+}
+
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
