@@ -1,22 +1,26 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
+  extensions = [vector]
 }
 
 model User {
-  id              String           @id @default(uuid())
-  email           String           @unique
-  name            String?
-  avatarUrl       String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  executions      Execution[]
-  toolConnections ToolConnection[]
+  id                   String                @id @default(uuid())
+  email                String                @unique
+  name                 String?
+  avatarUrl            String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  executions           Execution[]
+  toolConnections      ToolConnection[]
+  memories             Memory[]
+  conversationMessages ConversationMessage[]
 }
 
 model ToolConnection {
@@ -86,4 +90,31 @@ model AuditLog {
   @@index([executionId])
   @@index([action])
   @@index([createdAt])
+}
+
+model Memory {
+  id        String                       @id @default(uuid())
+  userId    String
+  user      User                         @relation(fields: [userId], references: [id])
+  type      String // 'execution' | 'tool_result' | 'conversation' | 'pattern'
+  content   String
+  embedding Unsupported("vector(768)")?
+  metadata  Json?
+  createdAt DateTime                     @default(now())
+
+  @@index([userId])
+  @@index([type])
+}
+
+model ConversationMessage {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  role        String // 'user' | 'assistant' | 'system'
+  content     String
+  executionId String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
