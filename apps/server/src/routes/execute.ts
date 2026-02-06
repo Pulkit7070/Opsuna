@@ -17,17 +17,18 @@ router.post(
   validateBody(ExecuteRequestSchema),
   async (req, res, next) => {
     try {
-      const { prompt } = req.body;
+      const { prompt, agentId } = req.body as { prompt: string; agentId?: string };
       const userId = req.user!.id;
 
-      // Generate execution plan using AI (with memory context)
-      const plan = await generateExecutionPlan(prompt, { userId, useMemory: true });
+      // Generate execution plan using AI (with memory context and optional agent)
+      const plan = await generateExecutionPlan(prompt, { userId, useMemory: true, agentId });
 
       // Create execution record
       const execution = await prisma.execution.create({
         data: {
           id: uuid(),
           userId,
+          agentId: agentId || null,
           prompt,
           status: 'awaiting_confirmation',
           riskLevel: plan.riskLevel,
@@ -41,6 +42,7 @@ router.post(
         role: 'user',
         content: prompt,
         executionId: execution.id,
+        metadata: agentId ? { agentId } : undefined,
       }).catch((err) => console.warn('[Execute] Failed to store conversation:', err));
 
       // Store AI response as conversation message
@@ -49,7 +51,7 @@ router.post(
         role: 'assistant',
         content: `Generated plan: ${plan.summary}`,
         executionId: execution.id,
-        metadata: { riskLevel: plan.riskLevel, stepCount: plan.steps.length },
+        metadata: { riskLevel: plan.riskLevel, stepCount: plan.steps.length, agentId },
       }).catch((err) => console.warn('[Execute] Failed to store AI response:', err));
 
       // Create audit log

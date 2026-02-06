@@ -3,6 +3,8 @@ import { registry } from '../tools/registry';
 import { searchMemory } from '../memory/store';
 import { getRecentContext } from '../memory/conversation';
 import { getPatternContext } from '../memory/patterns';
+import { buildAgentContext } from '../agents/runner';
+import { getAgent } from '../agents/registry';
 
 /**
  * Build a dynamic tool description string from the registry.
@@ -217,3 +219,95 @@ export async function getMemoryContextPreview(
 
 // Backward compat
 export const SYSTEM_PROMPT = getSystemPrompt();
+
+/**
+ * Build a prompt for an agent with scoped tools and memory.
+ */
+export async function buildAgentPrompt(
+  agentId: string,
+  userId: string,
+  userPrompt: string
+): Promise<string | null> {
+  try {
+    const agent = await getAgent(agentId);
+    if (!agent) {
+      return null;
+    }
+
+    const context = await buildAgentContext(agentId, userId, userPrompt);
+    if (!context) {
+      return null;
+    }
+
+    const parts: string[] = [];
+
+    // Agent identity and system prompt
+    parts.push(`You are the "${agent.name}" agent.`);
+    parts.push(context.systemPrompt);
+
+    // Response format instructions (same as base)
+    parts.push(`
+RESPONSE FORMAT:
+You MUST respond with a valid JSON object in this exact format:
+{
+  "summary": "Brief description of what the plan will do",
+  "riskLevel": "LOW" | "MEDIUM" | "HIGH",
+  "riskReason": "Explanation of why this risk level was assigned",
+  "steps": [
+    {
+      "id": "step-1",
+      "order": 1,
+      "toolName": "tool_name",
+      "description": "What this step does",
+      "parameters": { ... },
+      "riskLevel": "LOW" | "MEDIUM" | "HIGH"
+    }
+  ],
+  "rollbackSteps": [
+    {
+      "id": "rollback-1",
+      "order": 1,
+      "toolName": "tool_name",
+      "description": "How to undo this step",
+      "parameters": { ... },
+      "triggeredByStepId": "step-1"
+    }
+  ]
+}
+
+RULES:
+1. The overall risk level should be the highest risk of any individual step
+2. Include rollback steps for HIGH risk operations when possible
+3. Order steps logically
+4. Be conservative with risk assessment
+5. ONLY use tools from your allowed list
+6. ALWAYS respond with valid JSON only`);
+
+    // Add scoped tools
+    parts.push('\n' + context.toolsDescription);
+
+    // Add memory context if available
+    if (context.memoryContext) {
+      parts.push('\n' + context.memoryContext);
+    }
+
+    // Add conversation history if available
+    if (context.conversationHistory) {
+      parts.push('\n' + context.conversationHistory);
+    }
+
+    // Add tool patterns if available
+    if (context.toolPatterns) {
+      parts.push('\n' + context.toolPatterns);
+    }
+
+    // User request
+    parts.push(`\nUser request: ${userPrompt}`);
+    parts.push('\nRespond with the execution plan JSON:');
+
+    return parts.join('\n');
+  } catch (error) {
+    console.error('[Prompts] Failed to build agent prompt:', error);
+    return null;
+  }
+}
