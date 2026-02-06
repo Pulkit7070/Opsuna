@@ -13,10 +13,11 @@ import { Zap, Command, ChevronDown, ChevronUp, Terminal, Sparkles } from 'lucide
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTools } from '@/hooks/useTools';
+import { AgentSelector } from '@/components/AgentSelector';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/' },
-  { label: 'Workflows', href: '#' },
+  { label: 'Agents', href: '/agents' },
   { label: 'Tools', href: '/tools' },
   { label: 'Settings', href: '#' },
 ];
@@ -209,7 +210,8 @@ export default function Home() {
             {/* Main Panel */}
             <motion.div variants={itemVariants} className="lg:col-span-8 space-y-6">
               {/* Prompt Card */}
-              <div className="card p-6">
+              <div className="card p-6 space-y-4">
+                <AgentSelector />
                 <PromptInput
                   value={prompt}
                   onChange={setPrompt}
