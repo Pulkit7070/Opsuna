@@ -6,3 +6,4 @@ export { healthRouter } from './health';
 export { toolsRouter } from './tools';
 export { memoryRouter } from './memory';
 export { artifactsRouter } from './artifacts';
+export { agentsRouter } from './agents';
