@@ -15,6 +15,8 @@ import { executeSteps } from '../services/tools';
 import { eventEmitter } from '../services/events';
 import { storeMemory } from '../services/memory/store';
 import { recordExecutionOutcomes, ToolOutcome } from '../services/memory/patterns';
+import { createLogBundle } from '../services/artifacts/store';
+import { createExecutionReport } from '../services/artifacts/report';
 
 const router = Router();
 
@@ -269,6 +271,30 @@ async function executeInBackground(
 
     recordExecutionOutcomes(userId, toolOutcomes)
       .catch((err) => console.warn('[Confirm] Failed to record tool patterns:', err));
+
+    // Auto-generate artifacts (async, non-blocking)
+    // Convert results to log format for log bundle
+    const executionLogs = results.map((r) => ({
+      timestamp: r.completedAt ? new Date(r.completedAt) : new Date(),
+      level: r.status === 'success' ? 'info' : 'error',
+      message: r.status === 'success'
+        ? `${r.toolName} completed successfully`
+        : `${r.toolName} failed: ${r.error || 'Unknown error'}`,
+    }));
+
+    Promise.all([
+      createLogBundle(executionId, executionLogs),
+      createExecutionReport(executionId),
+    ])
+      .then(([logBundle, report]) => {
+        if (logBundle) {
+          console.log(`[Confirm] Created log bundle artifact: ${logBundle.id}`);
+        }
+        if (report) {
+          console.log(`[Confirm] Created execution report artifact: ${report.id}`);
+        }
+      })
+      .catch((err) => console.warn('[Confirm] Failed to generate artifacts:', err));
 
     eventEmitter.emitStatus({ executionId, status: finalStatus });
 
