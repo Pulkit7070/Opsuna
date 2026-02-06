@@ -40,20 +40,22 @@ model ToolConnection {
 }
 
 model Execution {
-  id          String       @id @default(uuid())
-  userId      String
-  user        User         @relation(fields: [userId], references: [id])
-  prompt      String
-  status      String       @default("pending")
-  riskLevel   String?
-  plan        Json?
-  results     Json?
-  error       String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  completedAt DateTime?
-  toolCalls   ToolCall[]
-  auditLogs   AuditLog[]
+  id            String         @id @default(uuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id])
+  prompt        String
+  status        String         @default("pending")
+  riskLevel     String?
+  plan          Json?
+  results       Json?
+  error         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  completedAt   DateTime?
+  toolCalls     ToolCall[]
+  auditLogs     AuditLog[]
+  artifacts     Artifact[]
+  sharedReports SharedReport[]
 
   @@index([userId])
   @@index([status])
@@ -117,4 +119,32 @@ model ConversationMessage {
   createdAt   DateTime @default(now())
 
   @@index([userId, createdAt])
+}
+
+model Artifact {
+  id          String    @id @default(uuid())
+  executionId String
+  execution   Execution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  type        String // 'log_bundle' | 'report' | 'file' | 'data'
+  name        String
+  mimeType    String
+  size        Int
+  storagePath String
+  publicUrl   String?
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+
+  @@index([executionId])
+}
+
+model SharedReport {
+  id          String    @id @default(uuid())
+  executionId String
+  execution   Execution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  token       String    @unique
+  expiresAt   DateTime?
+  viewCount   Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  @@index([token])
 }
