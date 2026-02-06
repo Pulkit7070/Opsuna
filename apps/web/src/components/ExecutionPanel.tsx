@@ -117,7 +117,7 @@ export function ExecutionPanel({
 
       {/* Results summary (shown after completion) */}
       {isComplete && results.length > 0 && (
-        <ToolResultSummary results={results} />
+        <ToolResultSummary results={results} executionId={executionId || undefined} />
       )}
 
       {/* Logs after completion */}

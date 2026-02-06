@@ -11,6 +11,7 @@ import { HistoryList } from '@/components/HistoryList';
 import { ToastContainer } from '@/components/Toast';
 import { Zap, Command, ChevronDown, ChevronUp, Terminal, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTools } from '@/hooks/useTools';
 
 const NAV_ITEMS = [
@@ -113,6 +114,11 @@ export default function Home() {
   const { isConnected } = useWebSocket();
   const logs = useLogs();
   const { allTools } = useTools();
+  const router = useRouter();
+
+  const handleExecutionSelect = (executionId: string) => {
+    router.push(`/executions/${executionId}`);
+  };
 
   const handleCloseConfirmDialog = () => {};
 
@@ -232,7 +238,7 @@ export default function Home() {
 
             {/* Sidebar */}
             <motion.div variants={itemVariants} className="lg:col-span-4 space-y-6">
-              <HistoryList />
+              <HistoryList onSelect={handleExecutionSelect} />
 
               {/* Stats Card */}
               <div className="card p-6">

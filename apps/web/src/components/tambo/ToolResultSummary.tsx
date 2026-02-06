@@ -2,14 +2,16 @@
 
 import { motion } from 'framer-motion';
 import { ToolCallResult } from '@opsuna/shared';
-import { CheckCircle2, XCircle, Clock, BarChart3 } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, BarChart3, FileText, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 interface ToolResultSummaryProps {
   results: ToolCallResult[];
+  executionId?: string;
 }
 
-export function ToolResultSummary({ results }: ToolResultSummaryProps) {
+export function ToolResultSummary({ results, executionId }: ToolResultSummaryProps) {
   const succeeded = results.filter((r) => r.status === 'success').length;
   const failed = results.filter((r) => r.status === 'failed').length;
   const skipped = results.filter((r) => r.status === 'skipped').length;
@@ -50,6 +52,26 @@ export function ToolResultSummary({ results }: ToolResultSummaryProps) {
           <ResultCard key={result.stepId} result={result} index={index} />
         ))}
       </div>
+
+      {/* Action Buttons */}
+      {executionId && (
+        <div className="px-5 pb-5 flex items-center gap-3">
+          <Link
+            href={`/executions/${executionId}`}
+            className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37]/10 text-[#D4AF37] rounded-lg hover:bg-[#D4AF37]/20 transition-colors text-sm"
+          >
+            <FileText className="h-4 w-4" />
+            View Report
+          </Link>
+          <Link
+            href={`/executions/${executionId}`}
+            className="flex items-center gap-2 px-4 py-2 text-neutral-400 hover:text-neutral-200 transition-colors text-sm"
+          >
+            <ExternalLink className="h-4 w-4" />
+            Full Details
+          </Link>
+        </div>
+      )}
     </motion.div>
   );
 }
