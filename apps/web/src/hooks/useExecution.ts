@@ -5,6 +5,7 @@ import { useExecutionStore } from '@/store/execution';
 import { useUIStore } from '@/store/ui';
 import { executePrompt, confirmExecution } from './useApi';
 import { useWebSocket } from './useWebSocket';
+import { useAgentsStore } from '@/store/agents';
 
 export function useExecution() {
   const {
@@ -28,6 +29,7 @@ export function useExecution() {
 
   const { addToast } = useUIStore();
   const { subscribe, unsubscribe } = useWebSocket();
+  const { selectedAgent } = useAgentsStore();
 
   const submitPrompt = useCallback(async () => {
     if (!prompt.trim()) {
@@ -39,7 +41,7 @@ export function useExecution() {
     setError(null);
 
     try {
-      const response = await executePrompt(prompt) as { success: boolean; data?: { executionId: string; plan: import('@opsuna/shared').ExecutionPlan }; error?: { message: string } };
+      const response = await executePrompt(prompt, selectedAgent?.id) as { success: boolean; data?: { executionId: string; plan: import('@opsuna/shared').ExecutionPlan }; error?: { message: string } };
 
       if (response.success && response.data) {
         const { executionId, plan } = response.data;
@@ -57,7 +59,7 @@ export function useExecution() {
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, setIsLoading, setError, startExecution, subscribe, addToast]);
+  }, [prompt, selectedAgent, setIsLoading, setError, startExecution, subscribe, addToast]);
 
   const confirm = useCallback(async (confirmPhrase?: string) => {
     if (!currentExecutionId) return;

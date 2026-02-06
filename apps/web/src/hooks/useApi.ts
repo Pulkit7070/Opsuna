@@ -60,10 +60,10 @@ export function useApi() {
 }
 
 // Typed API functions (use apiClient which auto-injects auth)
-export async function executePrompt(prompt: string) {
+export async function executePrompt(prompt: string, agentId?: string) {
   return apiClient('/api/execute', {
     method: 'POST',
-    body: JSON.stringify({ prompt }),
+    body: JSON.stringify({ prompt, agentId }),
   });
 }
 
