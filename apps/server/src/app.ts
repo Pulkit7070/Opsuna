@@ -15,6 +15,7 @@ import {
   healthRouter,
   toolsRouter,
   memoryRouter,
+  artifactsRouter,
 } from './routes';
 
 const app = express();
@@ -39,6 +40,7 @@ app.use('/api/confirm', confirmRouter);
 app.use('/api/rollback', rollbackRouter);
 app.use('/api/tools', toolsRouter);
 app.use('/api/memory', memoryRouter);
+app.use('/api', artifactsRouter); // Artifacts routes at /api level
 app.use('/health', healthRouter);
 
 // Error handling
