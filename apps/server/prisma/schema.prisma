@@ -21,6 +21,7 @@ model User {
   toolConnections      ToolConnection[]
   memories             Memory[]
   conversationMessages ConversationMessage[]
+  agents               Agent[]
 }
 
 model ToolConnection {
@@ -43,6 +44,8 @@ model Execution {
   id            String         @id @default(uuid())
   userId        String
   user          User           @relation(fields: [userId], references: [id])
+  agentId       String?
+  agent         Agent?         @relation(fields: [agentId], references: [id])
   prompt        String
   status        String         @default("pending")
   riskLevel     String?
@@ -58,6 +61,7 @@ model Execution {
   sharedReports SharedReport[]
 
   @@index([userId])
+  @@index([agentId])
   @@index([status])
   @@index([createdAt])
 }
@@ -147,4 +151,26 @@ model SharedReport {
   createdAt   DateTime  @default(now())
 
   @@index([token])
+}
+
+model Agent {
+  id           String      @id @default(uuid())
+  userId       String? // null for built-in agents
+  user         User?       @relation(fields: [userId], references: [id])
+  name         String
+  description  String
+  icon         String?
+  systemPrompt String
+  toolNames    String[] // Postgres array of allowed tool names
+  memoryScope  String      @default("shared") // 'shared' | 'isolated' | 'none'
+  isBuiltin    Boolean     @default(false)
+  isPublic     Boolean     @default(false)
+  config       Json?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  executions   Execution[]
+
+  @@index([userId])
+  @@index([isBuiltin])
+  @@index([isPublic])
 }
