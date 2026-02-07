@@ -17,6 +17,7 @@ import { AgentSelector } from '@/components/AgentSelector';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/' },
+  { label: 'Tambo AI', href: '/tambo' },
   { label: 'Chat', href: '/chat' },
   { label: 'Agents', href: '/agents' },
   { label: 'Tools', href: '/tools' },
