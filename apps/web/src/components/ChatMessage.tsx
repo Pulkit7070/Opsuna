@@ -1,5 +1,6 @@
 'use client';
 
+import { forwardRef } from 'react';
 import { motion } from 'framer-motion';
 import { User, Bot, Zap, CheckCircle2, XCircle, Clock, Loader2 } from 'lucide-react';
 import { ExecutionPlan, ToolCallResult, ExecutionStatus } from '@opsuna/shared';
@@ -25,13 +26,17 @@ interface ChatMessageProps {
   onCancel?: () => void;
 }
 
-export function ChatMessage({ message, onConfirm, onCancel }: ChatMessageProps) {
+export const ChatMessage = forwardRef<HTMLDivElement, ChatMessageProps>(function ChatMessage(
+  { message, onConfirm, onCancel },
+  ref
+) {
   const isUser = message.role === 'user';
   const isAssistant = message.role === 'assistant';
   const isExecution = message.role === 'execution';
 
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -98,7 +103,7 @@ export function ChatMessage({ message, onConfirm, onCancel }: ChatMessageProps) 
       </div>
     </motion.div>
   );
-}
+});
 
 function PlanPreview({
   plan,

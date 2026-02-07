@@ -45,19 +45,38 @@ export function ChatInterface() {
   useEffect(() => {
     if (!executionId) return;
 
-    // Update the last assistant message with plan/results
     setMessages((prev) => {
-      const lastAssistantIndex = prev.findLastIndex((m) => m.role === 'assistant');
-      if (lastAssistantIndex === -1) return prev;
-
       const updated = [...prev];
-      updated[lastAssistantIndex] = {
-        ...updated[lastAssistantIndex],
-        plan: plan || undefined,
-        results: results.length > 0 ? results : undefined,
-        status: status || undefined,
-        isLoading: false,
-      };
+
+      // Update the last assistant message with plan
+      const lastAssistantIndex = prev.findLastIndex((m) => m.role === 'assistant');
+      if (lastAssistantIndex !== -1 && plan) {
+        updated[lastAssistantIndex] = {
+          ...updated[lastAssistantIndex],
+          plan: plan,
+          status: status || undefined,
+          isLoading: false,
+        };
+      }
+
+      // Update the last execution message with results and final status
+      const lastExecutionIndex = prev.findLastIndex((m) => m.role === 'execution');
+      if (lastExecutionIndex !== -1 && status) {
+        const statusMessages: Record<string, string> = {
+          executing: 'Execution in progress...',
+          completed: 'Execution completed successfully!',
+          failed: 'Execution failed.',
+          cancelled: 'Execution was cancelled.',
+        };
+
+        updated[lastExecutionIndex] = {
+          ...updated[lastExecutionIndex],
+          content: statusMessages[status] || updated[lastExecutionIndex].content,
+          results: results.length > 0 ? results : updated[lastExecutionIndex].results,
+          status: status,
+        };
+      }
+
       return updated;
     });
   }, [executionId, plan, results, status]);
@@ -100,17 +119,16 @@ export function ChatInterface() {
       isLoading: true,
     };
 
+    const promptText = input.trim();
     setMessages((prev) => [...prev, userMessage, assistantMessage]);
-    setPrompt(input.trim());
+    setPrompt(promptText);
     setInput('');
 
     // Focus back on input
     inputRef.current?.focus();
 
-    // Submit after state update
-    setTimeout(() => {
-      submitPrompt();
-    }, 0);
+    // Submit with the prompt directly (don't rely on store update timing)
+    submitPrompt(promptText);
   }, [input, isLoading, selectedAgent, setPrompt, submitPrompt]);
 
   const handleConfirm = useCallback(() => {
