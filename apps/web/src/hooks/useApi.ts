@@ -70,11 +70,12 @@ export async function executePrompt(prompt: string, agentId?: string) {
 export async function confirmExecution(
   executionId: string,
   confirmed: boolean,
+  intentToken: string,
   confirmPhrase?: string
 ) {
   return apiClient(`/api/confirm/${executionId}`, {
     method: 'POST',
-    body: JSON.stringify({ confirmed, confirmPhrase }),
+    body: JSON.stringify({ confirmed, confirmPhrase, intentToken }),
   });
 }
 

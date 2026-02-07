@@ -18,6 +18,7 @@ export function useExecution() {
     progress,
     isLoading,
     showConfirmDialog,
+    intentToken,
     setPrompt,
     startExecution,
     updateStatus,
@@ -41,11 +42,11 @@ export function useExecution() {
     setError(null);
 
     try {
-      const response = await executePrompt(prompt, selectedAgent?.id) as { success: boolean; data?: { executionId: string; plan: import('@opsuna/shared').ExecutionPlan }; error?: { message: string } };
+      const response = await executePrompt(prompt, selectedAgent?.id) as { success: boolean; data?: { executionId: string; plan: import('@opsuna/shared').ExecutionPlan; intentToken?: string }; error?: { message: string } };
 
       if (response.success && response.data) {
-        const { executionId, plan } = response.data;
-        startExecution(executionId, plan);
+        const { executionId, plan, intentToken: token } = response.data;
+        startExecution(executionId, plan, token);
         subscribe(executionId);
         addToast({ type: 'info', title: 'Plan generated', message: 'Review and confirm to execute' });
       } else {
@@ -62,13 +63,16 @@ export function useExecution() {
   }, [prompt, selectedAgent, setIsLoading, setError, startExecution, subscribe, addToast]);
 
   const confirm = useCallback(async (confirmPhrase?: string) => {
-    if (!currentExecutionId) return;
+    if (!currentExecutionId || !intentToken) {
+      addToast({ type: 'error', title: 'Missing intent token', message: 'Please regenerate the plan' });
+      return;
+    }
 
     setIsLoading(true);
     setShowConfirmDialog(false);
 
     try {
-      const response = await confirmExecution(currentExecutionId, true, confirmPhrase);
+      const response = await confirmExecution(currentExecutionId, true, intentToken, confirmPhrase);
 
       if (response.success) {
         updateStatus('executing');
@@ -84,15 +88,15 @@ export function useExecution() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentExecutionId, setIsLoading, setShowConfirmDialog, updateStatus, setError, addToast]);
+  }, [currentExecutionId, intentToken, setIsLoading, setShowConfirmDialog, updateStatus, setError, addToast]);
 
   const cancel = useCallback(async () => {
-    if (!currentExecutionId) return;
+    if (!currentExecutionId || !intentToken) return;
 
     setShowConfirmDialog(false);
 
     try {
-      const response = await confirmExecution(currentExecutionId, false);
+      const response = await confirmExecution(currentExecutionId, false, intentToken);
 
       if (response.success) {
         updateStatus('cancelled');
@@ -102,7 +106,7 @@ export function useExecution() {
     } catch (err) {
       console.error('Failed to cancel:', err);
     }
-  }, [currentExecutionId, setShowConfirmDialog, updateStatus, unsubscribe, addToast]);
+  }, [currentExecutionId, intentToken, setShowConfirmDialog, updateStatus, unsubscribe, addToast]);
 
   const resetExecution = useCallback(() => {
     if (currentExecutionId) {

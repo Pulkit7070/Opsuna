@@ -20,6 +20,7 @@ interface ExecutionState {
   uiMessages: MCPUIMessage[];
   error: string | null;
   progress: { currentStep: number; totalSteps: number } | null;
+  intentToken: string | null; // Security token for confirmation
 
   // UI state
   isLoading: boolean;
@@ -27,7 +28,7 @@ interface ExecutionState {
 
   // Actions
   setPrompt: (prompt: string) => void;
-  startExecution: (executionId: string, plan: ExecutionPlan) => void;
+  startExecution: (executionId: string, plan: ExecutionPlan, intentToken?: string) => void;
   updateStatus: (status: ExecutionStatus, progress?: { currentStep: number; totalSteps: number }) => void;
   addLog: (log: LogEntry) => void;
   addUIMessage: (message: MCPUIMessage) => void;
@@ -48,6 +49,7 @@ const initialState = {
   uiMessages: [],
   error: null,
   progress: null,
+  intentToken: null,
   isLoading: false,
   showConfirmDialog: false,
 };
@@ -57,7 +59,7 @@ export const useExecutionStore = create<ExecutionState>((set) => ({
 
   setPrompt: (prompt) => set({ prompt }),
 
-  startExecution: (executionId, plan) =>
+  startExecution: (executionId, plan, intentToken) =>
     set({
       currentExecutionId: executionId,
       plan,
@@ -68,6 +70,7 @@ export const useExecutionStore = create<ExecutionState>((set) => ({
       uiMessages: [],
       error: null,
       progress: null,
+      intentToken: intentToken || null,
     }),
 
   updateStatus: (status, progress) =>
