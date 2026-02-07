@@ -41,24 +41,26 @@ model ToolConnection {
 }
 
 model Execution {
-  id            String         @id @default(uuid())
-  userId        String
-  user          User           @relation(fields: [userId], references: [id])
-  agentId       String?
-  agent         Agent?         @relation(fields: [agentId], references: [id])
-  prompt        String
-  status        String         @default("pending")
-  riskLevel     String?
-  plan          Json?
-  results       Json?
-  error         String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  completedAt   DateTime?
-  toolCalls     ToolCall[]
-  auditLogs     AuditLog[]
-  artifacts     Artifact[]
-  sharedReports SharedReport[]
+  id              String         @id @default(uuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id])
+  agentId         String?
+  agent           Agent?         @relation(fields: [agentId], references: [id])
+  prompt          String
+  status          String         @default("pending")
+  riskLevel       String?
+  plan            Json?
+  results         Json?
+  error           String?
+  intentToken     String?        // Short-lived token for secure confirmation
+  intentExpiresAt DateTime?      // Token expiration time
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  completedAt     DateTime?
+  toolCalls       ToolCall[]
+  auditLogs       AuditLog[]
+  artifacts       Artifact[]
+  sharedReports   SharedReport[]
 
   @@index([userId])
   @@index([agentId])
@@ -91,11 +93,15 @@ model AuditLog {
   action      String
   actor       String
   details     Json?
+  ipAddress   String?    // Client IP address
+  userAgent   String?    // Client user agent
+  severity    String?    // 'info' | 'warning' | 'critical'
   createdAt   DateTime   @default(now())
 
   @@index([executionId])
   @@index([action])
   @@index([createdAt])
+  @@index([severity])
 }
 
 model Memory {
