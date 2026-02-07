@@ -40,6 +40,8 @@ export function ToolCatalog() {
 
   const [searchInput, setSearchInput] = useState('');
   const [connecting, setConnecting] = useState<string | null>(null);
+  const [connectError, setConnectError] = useState<string | null>(null);
+  const [connectSuccess, setConnectSuccess] = useState<string | null>(null);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,10 +50,25 @@ export function ToolCatalog() {
 
   const handleConnect = async (appName: string) => {
     setConnecting(appName);
-    const redirectUrl = await connectApp(appName);
-    if (redirectUrl) {
-      // Open OAuth flow in popup
-      window.open(redirectUrl, 'composio-auth', 'width=600,height=700,popup=true');
+    setConnectError(null);
+    setConnectSuccess(null);
+
+    const result = await connectApp(appName);
+
+    if (result) {
+      if (result.alreadyConnected) {
+        // User is already connected - show success message
+        setConnectSuccess(result.message || `You're already connected to ${appName}!`);
+      } else if (result.redirectUrl) {
+        // Open OAuth flow in popup
+        window.open(result.redirectUrl, 'composio-auth', 'width=600,height=700,popup=true');
+      }
+    } else {
+      // Connection failed - show helpful message
+      setConnectError(
+        `Could not connect ${appName}. OAuth integration needs to be configured in the Composio dashboard (app.composio.dev). ` +
+        `Local tools work without configuration.`
+      );
     }
     setConnecting(null);
   };
@@ -120,6 +137,43 @@ export function ToolCatalog() {
       {error && (
         <div className="p-4 rounded-lg bg-red-400/10 border border-red-400/20 text-sm text-red-400">
           {error}
+        </div>
+      )}
+
+      {/* Connection Success */}
+      {connectSuccess && (
+        <div className="p-4 rounded-lg bg-emerald-400/10 border border-emerald-400/20 text-sm text-emerald-400">
+          <div className="flex items-start gap-2">
+            <span className="mt-0.5">✓</span>
+            <p>{connectSuccess}</p>
+          </div>
+          <button
+            onClick={() => setConnectSuccess(null)}
+            className="mt-2 text-xs underline opacity-75 hover:opacity-100"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Connection Error */}
+      {connectError && (
+        <div className="p-4 rounded-lg bg-amber-400/10 border border-amber-400/20 text-sm text-amber-400">
+          <div className="flex items-start gap-2">
+            <span className="mt-0.5">⚠️</span>
+            <div>
+              <p>{connectError}</p>
+              <p className="mt-2 text-xs opacity-75">
+                For demo purposes, local mock tools are fully functional without any setup.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setConnectError(null)}
+            className="mt-2 text-xs underline opacity-75 hover:opacity-100"
+          >
+            Dismiss
+          </button>
         </div>
       )}
 

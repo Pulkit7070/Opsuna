@@ -53,9 +53,19 @@ export function useTools() {
     }
   }, [setConnections]);
 
-  const connectApp = useCallback(async (appName: string): Promise<string | null> => {
+  const connectApp = useCallback(async (appName: string): Promise<{
+    redirectUrl?: string;
+    alreadyConnected?: boolean;
+    message?: string;
+  } | null> => {
     try {
-      const res = await apiClient<{ redirectUrl: string; connectionId: string }>(
+      console.log('[useTools] Connecting app:', appName);
+      const res = await apiClient<{
+        redirectUrl?: string;
+        connectionId?: string;
+        alreadyConnected?: boolean;
+        message?: string;
+      }>(
         '/api/tools/composio/connect',
         {
           method: 'POST',
@@ -63,14 +73,32 @@ export function useTools() {
         }
       );
 
-      if (res.success && res.data?.redirectUrl) {
-        return res.data.redirectUrl;
+      console.log('[useTools] Connect response:', JSON.stringify(res));
+
+      if (res.success && res.data) {
+        // Handle already connected case
+        if (res.data.alreadyConnected) {
+          console.log('[useTools] Already connected:', res.data.message);
+          await fetchConnections(); // Refresh connections list
+          return {
+            alreadyConnected: true,
+            message: res.data.message || `Already connected to ${appName}`
+          };
+        }
+
+        // Handle new OAuth flow
+        if (res.data.redirectUrl) {
+          console.log('[useTools] Got redirect URL:', res.data.redirectUrl);
+          return { redirectUrl: res.data.redirectUrl };
+        }
       }
+      console.warn('[useTools] Unexpected response:', res);
       return null;
-    } catch {
+    } catch (err) {
+      console.error('[useTools] Connect error:', err);
       return null;
     }
-  }, []);
+  }, [fetchConnections]);
 
   const disconnectApp = useCallback(async (appName: string) => {
     try {
