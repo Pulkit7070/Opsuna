@@ -24,40 +24,66 @@ export async function runSmokeTests(
     await delay(300);
     addLog('info', 'Loading test configuration...');
 
-    // Simulate running tests
+    // Simulate running tests with realistic test names
     const testCases = [
-      { name: 'Health endpoint responds', passed: true },
-      { name: 'Authentication flow works', passed: true },
-      { name: 'API returns valid JSON', passed: true },
-      { name: 'Database connection active', passed: true },
-      { name: 'Cache layer operational', passed: true },
+      { name: 'GET /health returns 200', duration: 45, passed: true },
+      { name: 'GET /api/v1/status returns valid JSON', duration: 123, passed: true },
+      { name: 'POST /auth/login accepts valid credentials', duration: 234, passed: true },
+      { name: 'GET /api/v1/users requires authentication', duration: 56, passed: true },
+      { name: 'Database connection pool is healthy', duration: 89, passed: true },
+      { name: 'Redis cache responds within 10ms', duration: 8, passed: true },
+      { name: 'Static assets are accessible', duration: 156, passed: true },
+      { name: 'WebSocket endpoint accepts connections', duration: 178, passed: true },
     ];
 
+    addLog('info', 'Running test suite...');
+    addLog('info', '');
+
     for (const test of testCases) {
-      await delay(500);
+      await delay(Math.floor(Math.random() * 200) + 100);
       if (test.passed) {
-        addLog('info', `  PASS: ${test.name}`);
+        addLog('info', `  ✓ ${test.name} (${test.duration}ms)`);
       } else {
-        addLog('error', `  FAIL: ${test.name}`);
+        addLog('error', `  ✗ ${test.name} (${test.duration}ms)`);
       }
     }
 
-    await delay(300);
+    const totalDuration = testCases.reduce((sum, t) => sum + t.duration, 0);
     const passed = testCases.filter(t => t.passed).length;
-    const total = testCases.length;
-    addLog('info', `Test run complete: ${passed}/${total} passed`);
+    const failed = testCases.length - passed;
+
+    await delay(200);
+    addLog('info', '');
+    addLog('info', `Test Results: ${passed} passed, ${failed} failed`);
+    addLog('info', `Total Duration: ${totalDuration}ms`);
+    addLog('info', `Environment: ${params.environment}`);
 
     return {
       callId,
       toolName: 'run_smoke_tests',
-      success: true,
+      success: failed === 0,
       data: {
         environment: params.environment,
         suite,
-        passed,
-        failed: total - passed,
-        total,
-        results: testCases,
+        summary: {
+          passed,
+          failed,
+          skipped: 0,
+          total: testCases.length,
+          duration: totalDuration,
+        },
+        tests: testCases.map((t, i) => ({
+          id: i + 1,
+          name: t.name,
+          status: t.passed ? 'passed' : 'failed',
+          duration: t.duration,
+        })),
+        coverage: {
+          lines: 87.5,
+          branches: 82.3,
+          functions: 91.2,
+          statements: 86.8,
+        },
       },
       duration: Date.now() - startTime,
       logs,
