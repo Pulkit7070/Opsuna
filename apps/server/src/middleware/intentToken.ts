@@ -5,6 +5,7 @@
 
 import { nanoid } from 'nanoid';
 import { prisma } from '../lib/prisma';
+import { config } from '../lib/config';
 import { createError } from './errorHandler';
 import { Request, Response, NextFunction } from 'express';
 
@@ -34,7 +35,12 @@ export async function validateIntentToken(
     const { intentToken } = req.body;
     const userId = (req as Request & { user?: { id: string } }).user?.id;
 
+    // In dev mode, skip validation if no token provided (for easier testing)
     if (!intentToken) {
+      if (config.isDev) {
+        console.log('[IntentToken] Dev mode: skipping token validation');
+        return next();
+      }
       return next(createError(
         'Intent token is required for confirmation',
         400,

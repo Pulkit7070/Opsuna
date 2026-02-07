@@ -9,6 +9,7 @@ import {
 import { v4 as uuid } from 'uuid';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
+import { config } from '../lib/config';
 import { validateBody, validateParams } from '../middleware';
 import { createError } from '../middleware/errorHandler';
 import { validateIntentToken, clearIntentToken } from '../middleware/intentToken';
@@ -46,8 +47,8 @@ router.post(
 
       const plan = execution.plan as unknown as ExecutionPlan;
 
-      // For HIGH risk, verify confirm phrase
-      if (plan.riskLevel === 'HIGH') {
+      // For HIGH risk, verify confirm phrase (skip in dev mode for easier testing)
+      if (plan.riskLevel === 'HIGH' && !config.isDev) {
         const expectedPhrase = 'I understand the risks';
         if (confirmPhrase !== expectedPhrase) {
           return next(createError(

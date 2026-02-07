@@ -165,6 +165,86 @@ router.post(
 );
 
 /**
+ * GET /api/executions/:id/report/inline
+ * Get markdown report content directly (no storage required).
+ */
+router.get(
+  '/executions/:id/report/inline',
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const userId = authReq.user!.id;
+      const { id: executionId } = req.params;
+
+      // Verify execution belongs to user
+      const execution = await prisma.execution.findFirst({
+        where: { id: executionId, userId },
+        include: {
+          toolCalls: {
+            orderBy: { createdAt: 'asc' },
+          },
+          auditLogs: {
+            orderBy: { createdAt: 'asc' },
+          },
+        },
+      });
+
+      if (!execution) {
+        return res.status(404).json({
+          success: false,
+          error: 'Execution not found',
+        });
+      }
+
+      // Build report data
+      const reportData = {
+        execution: {
+          id: execution.id,
+          prompt: execution.prompt,
+          status: execution.status,
+          riskLevel: execution.riskLevel,
+          createdAt: execution.createdAt,
+          completedAt: execution.completedAt,
+        },
+        plan: execution.plan as unknown as ExecutionPlan | null,
+        results: execution.results as unknown as ToolCallResult[] | null,
+        toolCalls: execution.toolCalls.map((tc) => ({
+          stepId: tc.stepId,
+          toolName: tc.toolName,
+          status: tc.status,
+          startedAt: tc.startedAt,
+          completedAt: tc.completedAt,
+          error: tc.error,
+        })),
+        auditLogs: execution.auditLogs.map((al) => ({
+          action: al.action,
+          actor: al.actor,
+          createdAt: al.createdAt,
+        })),
+      };
+
+      const markdown = generateMarkdownReport(reportData);
+
+      return res.json({
+        success: true,
+        data: {
+          content: markdown,
+          executionId,
+          generatedAt: new Date().toISOString(),
+        },
+      });
+    } catch (error) {
+      console.error('[Artifacts] Inline report error:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to generate report',
+      });
+    }
+  }
+);
+
+/**
  * POST /api/executions/:id/share
  * Create a shareable link for an execution.
  */

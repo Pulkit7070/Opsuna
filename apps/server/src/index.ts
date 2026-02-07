@@ -5,6 +5,24 @@ import { prisma } from './lib/prisma';
 import { wsManager } from './services/events';
 
 async function bootstrap() {
+  // In dev mode, ensure mock user exists for testing
+  if (config.isDev) {
+    try {
+      await prisma.user.upsert({
+        where: { id: 'user-001' },
+        update: {},
+        create: {
+          id: 'user-001',
+          email: 'demo@opsuna.dev',
+          name: 'Demo User',
+        },
+      });
+      console.log('[Server] Dev mode: Mock user ready');
+    } catch (error) {
+      console.warn('[Server] Failed to create mock user:', error);
+    }
+  }
+
   // Create HTTP server
   const server = createServer(app);
 
