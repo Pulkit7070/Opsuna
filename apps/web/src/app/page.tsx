@@ -17,9 +17,9 @@ import { AgentSelector } from '@/components/AgentSelector';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/' },
+  { label: 'Chat', href: '/chat' },
   { label: 'Agents', href: '/agents' },
   { label: 'Tools', href: '/tools' },
-  { label: 'Settings', href: '#' },
 ];
 
 const FAQ_ITEMS = [
