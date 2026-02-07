@@ -2,14 +2,17 @@
 
 import { motion } from 'framer-motion';
 import { ExecutionPlan, RiskLevel } from '@opsuna/shared';
-import { AlertTriangle, CheckCircle2, Shield, Zap, RotateCcw } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Shield, Zap, RotateCcw, Loader2, Play, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ActionPreviewCardProps {
   plan: ExecutionPlan;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+  isLoading?: boolean;
 }
 
-export function ActionPreviewCard({ plan }: ActionPreviewCardProps) {
+export function ActionPreviewCard({ plan, onConfirm, onCancel, isLoading }: ActionPreviewCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -118,6 +121,58 @@ export function ActionPreviewCard({ plan }: ActionPreviewCardProps) {
                 </div>
               ))}
             </div>
+          </motion.div>
+        )}
+
+        {/* Confirmation buttons */}
+        {(onConfirm || onCancel) && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="pt-6 border-t border-border-subtle flex items-center justify-end gap-3"
+          >
+            {onCancel && (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={onCancel}
+                disabled={isLoading}
+                className="px-5 py-2.5 bg-surface-base border border-border-subtle rounded-lg
+                           text-text-secondary hover:text-text-primary hover:border-border-highlight
+                           transition-all disabled:opacity-50 flex items-center gap-2"
+              >
+                <X className="h-4 w-4" />
+                Cancel
+              </motion.button>
+            )}
+            {onConfirm && (
+              <motion.button
+                whileHover={{ scale: 1.02, boxShadow: '0 0 20px rgba(212, 175, 55, 0.3)' }}
+                whileTap={{ scale: 0.98 }}
+                onClick={onConfirm}
+                disabled={isLoading}
+                className={cn(
+                  'px-6 py-2.5 rounded-lg font-medium transition-all flex items-center gap-2',
+                  plan.riskLevel === 'HIGH'
+                    ? 'bg-red-500 hover:bg-red-600 text-white'
+                    : 'bg-gradient-to-r from-accent-orange to-accent-orange-bright text-black hover:shadow-glow-orange',
+                  'disabled:opacity-50 disabled:cursor-not-allowed'
+                )}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Executing...
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4" />
+                    {plan.riskLevel === 'HIGH' ? 'Execute (High Risk)' : 'Execute Plan'}
+                  </>
+                )}
+              </motion.button>
+            )}
           </motion.div>
         )}
       </div>
