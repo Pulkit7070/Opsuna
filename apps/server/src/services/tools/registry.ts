@@ -116,3 +116,92 @@ registry.register({
     { name: 'version', type: 'string', description: 'Version to rollback to', required: false },
   ],
 });
+
+registry.register({
+  name: 'send_email',
+  displayName: 'Send Email',
+  description: 'Send an email notification',
+  category: 'communication',
+  riskLevel: 'LOW',
+  rollbackSupported: false,
+  source: 'local',
+  parameters: [
+    { name: 'to', type: 'string', description: 'Recipient email address', required: true },
+    { name: 'subject', type: 'string', description: 'Email subject', required: true },
+    { name: 'body', type: 'string', description: 'Email body content', required: true },
+    { name: 'cc', type: 'string', description: 'CC recipients', required: false },
+  ],
+});
+
+registry.register({
+  name: 'run_unit_tests',
+  displayName: 'Run Unit Tests',
+  description: 'Run the unit test suite with optional coverage report',
+  category: 'testing',
+  riskLevel: 'LOW',
+  rollbackSupported: false,
+  source: 'local',
+  parameters: [
+    { name: 'testSuite', type: 'string', description: 'Specific test suite to run', required: false },
+    { name: 'coverage', type: 'boolean', description: 'Generate coverage report', required: false, default: false },
+  ],
+});
+
+registry.register({
+  name: 'deploy_production',
+  displayName: 'Deploy to Production',
+  description: 'Deploy code to the production environment (high risk)',
+  category: 'deployment',
+  riskLevel: 'HIGH',
+  rollbackSupported: true,
+  source: 'local',
+  parameters: [
+    { name: 'version', type: 'string', description: 'Version to deploy', required: true },
+    { name: 'rollbackOnFailure', type: 'boolean', description: 'Auto-rollback on failure', required: false, default: true },
+  ],
+});
+
+registry.register({
+  name: 'check_ci_status',
+  displayName: 'Check CI Status',
+  description: 'Check the status of CI/CD pipelines for a repository',
+  category: 'analytics',
+  riskLevel: 'LOW',
+  rollbackSupported: false,
+  source: 'local',
+  parameters: [
+    { name: 'repo', type: 'string', description: 'Repository name', required: true },
+    { name: 'branch', type: 'string', description: 'Branch to check', required: false, default: 'main' },
+  ],
+});
+
+registry.register({
+  name: 'create_jira_ticket',
+  displayName: 'Create Jira Ticket',
+  description: 'Create a new ticket in Jira',
+  category: 'productivity',
+  riskLevel: 'LOW',
+  rollbackSupported: false,
+  source: 'local',
+  parameters: [
+    { name: 'title', type: 'string', description: 'Ticket title', required: true },
+    { name: 'description', type: 'string', description: 'Ticket description', required: true },
+    { name: 'type', type: 'string', description: 'Issue type (Bug, Task, Story)', required: true },
+    { name: 'priority', type: 'string', description: 'Priority level', required: false, default: 'Medium' },
+    { name: 'assignee', type: 'string', description: 'Assignee email', required: false },
+  ],
+});
+
+registry.register({
+  name: 'run_database_migration',
+  displayName: 'Run Database Migration',
+  description: 'Run pending database migrations',
+  category: 'deployment',
+  riskLevel: 'HIGH',
+  rollbackSupported: true,
+  source: 'local',
+  parameters: [
+    { name: 'environment', type: 'string', description: 'Target environment', required: true },
+    { name: 'dryRun', type: 'boolean', description: 'Preview without applying', required: false, default: false },
+  ],
+});

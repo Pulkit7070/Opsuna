@@ -7,6 +7,12 @@ import {
   createGithubPR,
   postSlackMessage,
   rollbackDeploy,
+  sendEmail,
+  runUnitTests,
+  deployProduction,
+  checkCIStatus,
+  createJiraTicket,
+  runDatabaseMigration,
 } from './implementations';
 
 type ToolImplementation = (
@@ -21,6 +27,12 @@ const localImplementations: Record<string, ToolImplementation> = {
   create_github_pr: createGithubPR as ToolImplementation,
   post_slack_message: postSlackMessage as ToolImplementation,
   rollback_deploy: rollbackDeploy as ToolImplementation,
+  send_email: sendEmail as ToolImplementation,
+  run_unit_tests: runUnitTests as ToolImplementation,
+  deploy_production: deployProduction as ToolImplementation,
+  check_ci_status: checkCIStatus as ToolImplementation,
+  create_jira_ticket: createJiraTicket as ToolImplementation,
+  run_database_migration: runDatabaseMigration as ToolImplementation,
 };
 
 export async function routeToolCall(
