@@ -1,6 +1,7 @@
 import { ExecutionStep, ToolCallResult, ToolLog, LogEntry } from '@opsuna/shared';
 import { routeToolCall } from './router';
 import { v4 as uuid } from 'uuid';
+import { withTimeout, validateOutput, ToolTimeoutError, getToolTimeout } from './sandbox';
 
 interface ExecutorCallbacks {
   onStepStart: (stepId: string) => void;
@@ -34,16 +35,27 @@ export async function executeSteps(
 
     try {
       const startedAt = new Date();
+      const timeoutMs = getToolTimeout(step.toolName);
 
-      const toolResult = await routeToolCall(
-        callId,
+      // Execute with timeout protection
+      const toolResult = await withTimeout(
+        routeToolCall(
+          callId,
+          step.toolName,
+          step.parameters,
+          onLog,
+          userId
+        ),
         step.toolName,
-        step.parameters,
-        onLog,
-        userId
+        timeoutMs
       );
 
       const completedAt = new Date();
+
+      // Validate output size
+      if (toolResult.data) {
+        toolResult.data = validateOutput(step.toolName, toolResult.data);
+      }
 
       const result: ToolCallResult = {
         stepId: step.id,
@@ -75,7 +87,14 @@ export async function executeSteps(
         break;
       }
     } catch (error) {
+      const isTimeout = error instanceof ToolTimeoutError;
       const errorMessage = error instanceof Error ? error.message : String(error);
+
+      // Log timeout errors with more context
+      if (isTimeout) {
+        console.warn(`[Executor] Tool ${step.toolName} timed out after ${getToolTimeout(step.toolName) / 1000}s`);
+      }
+
       callbacks.onStepError(step.id, errorMessage);
 
       const result: ToolCallResult = {
@@ -84,7 +103,7 @@ export async function executeSteps(
         status: 'failed',
         startedAt: new Date(),
         completedAt: new Date(),
-        error: errorMessage,
+        error: isTimeout ? `Timeout: ${errorMessage}` : errorMessage,
         logs,
       };
 
