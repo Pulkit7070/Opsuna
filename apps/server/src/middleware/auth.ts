@@ -73,6 +73,7 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     }
 
     // Upsert user in our database on every authenticated request
+    console.log(`[Auth] Upserting user: ${supabaseUser.id} (${supabaseUser.email})`);
     await prisma.user.upsert({
       where: { id: supabaseUser.id },
       update: {
@@ -87,6 +88,7 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
         avatarUrl: supabaseUser.avatarUrl,
       },
     });
+    console.log(`[Auth] User upsert successful for: ${supabaseUser.id}`);
 
     req.user = supabaseUser;
     next();
