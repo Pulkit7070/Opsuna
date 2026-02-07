@@ -34,11 +34,24 @@ router.get('/', async (req, res, next) => {
       });
     }
 
-    let tools = registry.list();
+    // Get local tools from registry
+    const localTools = registry.listBySource('local');
 
-    if (source && typeof source === 'string') {
-      tools = tools.filter(t => t.source === source);
+    // Get Composio tools (cached) unless specifically filtering for local only
+    let composioTools: typeof localTools = [];
+    if (source !== 'local') {
+      try {
+        composioTools = await fetchComposioTools(false);
+      } catch (err) {
+        console.warn('[Tools] Failed to fetch Composio tools:', err);
+        // Continue with just local tools
+      }
     }
+
+    // Merge tools based on source filter
+    let tools = source === 'local' ? localTools :
+                source === 'composio' ? composioTools :
+                [...localTools, ...composioTools];
 
     if (category && typeof category === 'string') {
       tools = tools.filter(t => t.category === category);
@@ -108,6 +121,8 @@ router.post('/composio/connect', async (req, res, next) => {
     const userId = req.user!.id;
     const { appName, redirectUrl } = req.body;
 
+    console.log(`[Tools] Connect request: userId="${userId}", appName="${appName}"`);
+
     if (!appName) {
       return next(createError('appName is required', 400, 'MISSING_APP_NAME'));
     }
@@ -118,8 +133,22 @@ router.post('/composio/connect', async (req, res, next) => {
       redirectUrl || `${req.headers.origin || 'http://localhost:3000'}/tools/callback`
     );
 
+    console.log(`[Tools] Connect result:`, result ? (result.alreadyConnected ? 'already connected' : 'success') : 'null');
+
     if (!result) {
       return next(createError('Failed to initiate connection', 500, 'CONNECTION_FAILED'));
+    }
+
+    // If user already has an active connection, return success with a note
+    if (result.alreadyConnected) {
+      return res.json({
+        success: true,
+        data: {
+          alreadyConnected: true,
+          connectionId: result.connectionId,
+          message: `You're already connected to ${appName}!`,
+        },
+      });
     }
 
     res.json({
@@ -127,6 +156,7 @@ router.post('/composio/connect', async (req, res, next) => {
       data: result,
     });
   } catch (error) {
+    console.error(`[Tools] Connect error:`, error);
     next(createError(
       error instanceof Error ? error.message : 'Failed to initiate connection',
       500,
