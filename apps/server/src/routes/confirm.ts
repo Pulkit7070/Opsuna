@@ -11,6 +11,9 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { validateBody, validateParams } from '../middleware';
 import { createError } from '../middleware/errorHandler';
+import { validateIntentToken, clearIntentToken } from '../middleware/intentToken';
+import { userConfirmLimiter } from '../middleware/userRateLimit';
+import { extractClientInfo } from '../middleware/sanitize';
 import { executeSteps } from '../services/tools';
 import { eventEmitter } from '../services/events';
 import { storeMemory } from '../services/memory/store';
@@ -22,13 +25,16 @@ const router = Router();
 
 router.post(
   '/:id',
+  userConfirmLimiter,
   validateParams(ExecutionIdParamSchema),
   validateBody(ConfirmRequestSchema),
+  validateIntentToken,
   async (req, res, next) => {
     try {
       const { id } = req.params;
       const { confirmed, confirmPhrase } = req.body;
       const userId = req.user!.id;
+      const { ipAddress, userAgent } = extractClientInfo(req);
 
       const execution = await prisma.execution.findFirst({
         where: { id, userId, status: 'awaiting_confirmation' },
@@ -52,6 +58,9 @@ router.post(
         }
       }
 
+      // Clear intent token after validation (prevent reuse)
+      clearIntentToken(id).catch((err) => console.warn('[Confirm] Failed to clear intent token:', err));
+
       if (!confirmed) {
         // User cancelled
         await prisma.execution.update({
@@ -64,6 +73,9 @@ router.post(
             executionId: id,
             action: 'EXECUTION_CANCELLED',
             actor: userId,
+            ipAddress,
+            userAgent,
+            severity: 'info',
           },
         });
 
@@ -84,11 +96,17 @@ router.post(
         data: { status: 'executing', updatedAt: new Date() },
       });
 
+      // Determine severity based on risk level
+      const severity = plan.riskLevel === 'HIGH' ? 'critical' : plan.riskLevel === 'MEDIUM' ? 'warning' : 'info';
+
       await prisma.auditLog.create({
         data: {
           executionId: id,
           action: 'EXECUTION_STARTED',
           actor: userId,
+          ipAddress,
+          userAgent,
+          severity,
         },
       });
 
@@ -104,8 +122,8 @@ router.post(
         data: { executionId: id, status: 'executing' },
       });
 
-      // Execute steps asynchronously
-      executeInBackground(id, plan, userId);
+      // Execute steps asynchronously (pass client info for audit logs)
+      executeInBackground(id, plan, userId, { ipAddress, userAgent });
 
     } catch (error) {
       next(createError(
@@ -120,7 +138,8 @@ router.post(
 async function executeInBackground(
   executionId: string,
   plan: ExecutionPlan,
-  userId: string
+  userId: string,
+  clientInfo: { ipAddress: string; userAgent: string }
 ) {
   let currentStepIndex = 0;
 
@@ -237,6 +256,9 @@ async function executeInBackground(
         action: allSucceeded ? 'EXECUTION_COMPLETED' : 'EXECUTION_FAILED',
         actor: userId,
         details: { stepsCompleted: results.filter(r => r.status === 'success').length },
+        ipAddress: clientInfo.ipAddress,
+        userAgent: clientInfo.userAgent,
+        severity: allSucceeded ? 'info' : 'warning',
       },
     });
 
