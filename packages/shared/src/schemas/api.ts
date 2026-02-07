@@ -7,7 +7,7 @@ export const ExecuteRequestSchema = z.object({
 export const ConfirmRequestSchema = z.object({
   confirmed: z.boolean(),
   confirmPhrase: z.string().optional(),
-  intentToken: z.string().min(1, 'Intent token is required'),
+  intentToken: z.string().optional(), // Optional in dev mode, required in production
 });
 
 export const RollbackRequestSchema = z.object({
