@@ -99,7 +99,14 @@ export function ExecutionPanel({
       )}
 
       {/* Action preview (shown when awaiting confirmation) */}
-      {status === 'awaiting_confirmation' && <ActionPreviewCard plan={plan} />}
+      {status === 'awaiting_confirmation' && (
+        <ActionPreviewCard
+          plan={plan}
+          onConfirm={() => onConfirm()}
+          onCancel={onCancel}
+          isLoading={isLoading}
+        />
+      )}
 
       {/* Progress stepper (shown during and after execution) */}
       {(isExecuting || isComplete) && results.length > 0 && (

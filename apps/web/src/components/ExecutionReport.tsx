@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { FileText, Download, Share2, Copy, Check } from 'lucide-react';
-import { useArtifacts, Artifact } from '@/hooks/useArtifacts';
+import { FileText, Download, Share2, Copy, Check, RefreshCw } from 'lucide-react';
+import { useArtifacts } from '@/hooks/useArtifacts';
 
 interface ExecutionReportProps {
   executionId: string;
@@ -12,10 +12,9 @@ interface ExecutionReportProps {
 }
 
 export function ExecutionReport({ executionId, onShare }: ExecutionReportProps) {
-  const { getArtifacts, downloadArtifact, generateReport, loading, error } = useArtifacts();
-  const [report, setReport] = useState<Artifact | null>(null);
+  const { getInlineReport, loading, error } = useArtifacts();
   const [content, setContent] = useState<string>('');
-  const [generating, setGenerating] = useState(false);
+  const [loadingReport, setLoadingReport] = useState(true);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -23,45 +22,31 @@ export function ExecutionReport({ executionId, onShare }: ExecutionReportProps) 
   }, [executionId]);
 
   const loadReport = async () => {
-    const artifacts = await getArtifacts(executionId);
-    const reportArtifact = artifacts.find(a => a.type === 'report');
-    if (reportArtifact) {
-      setReport(reportArtifact);
-      const blob = await downloadArtifact(reportArtifact.id);
-      if (blob) {
-        const text = await blob.text();
-        setContent(text);
+    setLoadingReport(true);
+    try {
+      // Use inline report endpoint - no storage required
+      const reportContent = await getInlineReport(executionId);
+      if (reportContent) {
+        setContent(reportContent);
       }
+    } catch (err) {
+      console.error('Failed to load report:', err);
+    } finally {
+      setLoadingReport(false);
     }
   };
 
-  const handleGenerateReport = async () => {
-    setGenerating(true);
-    const artifact = await generateReport(executionId);
-    if (artifact) {
-      setReport(artifact);
-      const blob = await downloadArtifact(artifact.id);
-      if (blob) {
-        const text = await blob.text();
-        setContent(text);
-      }
-    }
-    setGenerating(false);
-  };
-
-  const handleDownload = async () => {
-    if (!report) return;
-    const blob = await downloadArtifact(report.id);
-    if (blob) {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = report.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
+  const handleDownload = () => {
+    if (!content) return;
+    const blob = new Blob([content], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `report-${executionId.slice(0, 8)}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const handleCopy = async () => {
@@ -70,7 +55,7 @@ export function ExecutionReport({ executionId, onShare }: ExecutionReportProps) 
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (loading && !report) {
+  if (loadingReport || loading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="w-6 h-6 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
@@ -78,34 +63,34 @@ export function ExecutionReport({ executionId, onShare }: ExecutionReportProps) 
     );
   }
 
-  if (error) {
-    return (
-      <div className="text-red-400 text-sm py-4 text-center">
-        {error}
-      </div>
-    );
-  }
-
-  if (!report && !generating) {
+  if (error && !content) {
     return (
       <div className="flex flex-col items-center justify-center py-12 space-y-4">
-        <FileText className="w-12 h-12 text-neutral-600" />
-        <p className="text-neutral-500">No report available</p>
+        <FileText className="w-12 h-12 text-red-400" />
+        <p className="text-red-400 text-sm">{error}</p>
         <button
-          onClick={handleGenerateReport}
-          className="px-4 py-2 bg-[#D4AF37]/20 text-[#D4AF37] rounded-lg hover:bg-[#D4AF37]/30 transition-colors"
+          onClick={loadReport}
+          className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37]/20 text-[#D4AF37] rounded-lg hover:bg-[#D4AF37]/30 transition-colors"
         >
-          Generate Report
+          <RefreshCw className="w-4 h-4" />
+          Retry
         </button>
       </div>
     );
   }
 
-  if (generating) {
+  if (!content) {
     return (
       <div className="flex flex-col items-center justify-center py-12 space-y-4">
-        <div className="w-8 h-8 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
-        <p className="text-neutral-400">Generating report...</p>
+        <FileText className="w-12 h-12 text-neutral-600" />
+        <p className="text-neutral-500">No report available</p>
+        <button
+          onClick={loadReport}
+          className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37]/20 text-[#D4AF37] rounded-lg hover:bg-[#D4AF37]/30 transition-colors"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Generate Report
+        </button>
       </div>
     );
   }

@@ -197,6 +197,29 @@ export function useArtifacts() {
     }
   }, []);
 
+  const getInlineReport = useCallback(async (executionId: string): Promise<string | null> => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await apiClient<{ content: string; executionId: string; generatedAt: string }>(
+        `/api/executions/${executionId}/report/inline`
+      );
+
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Failed to get report');
+      }
+
+      return result.data?.content || null;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to get report';
+      setError(message);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     loading,
     error,
@@ -207,5 +230,6 @@ export function useArtifacts() {
     getSharedReport,
     downloadArtifact,
     deleteArtifact,
+    getInlineReport,
   };
 }

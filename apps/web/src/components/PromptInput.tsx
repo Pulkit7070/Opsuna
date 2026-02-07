@@ -6,7 +6,7 @@ import { Loader2, ArrowRight } from 'lucide-react';
 interface PromptInputProps {
   value: string;
   onChange: (value: string) => void;
-  onSubmit: () => void;
+  onSubmit: (value?: string) => void;
   isLoading?: boolean;
   disabled?: boolean;
 }
@@ -28,7 +28,7 @@ export function PromptInput({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
-      onSubmit();
+      onSubmit(value);
     }
   };
 
@@ -59,7 +59,7 @@ export function PromptInput({
         <motion.button
           whileHover={{ scale: 1.05, filter: 'brightness(1.1)' }}
           whileTap={{ scale: 0.95 }}
-          onClick={onSubmit}
+          onClick={() => onSubmit(value)}
           disabled={!value.trim() || isLoading || disabled}
           className="absolute bottom-4 right-4 p-3 bg-[#D4AF37] text-black rounded-lg
                      disabled:opacity-50 disabled:cursor-not-allowed

@@ -10,7 +10,7 @@ import { useAgentsStore } from '@/store/agents';
 export function useExecution() {
   const {
     currentExecutionId,
-    prompt,
+    prompt: storePrompt,
     status,
     plan,
     results,
@@ -28,12 +28,16 @@ export function useExecution() {
     reset,
   } = useExecutionStore();
 
+  // Ensure prompt is always a string
+  const prompt = storePrompt ?? '';
+
   const { addToast } = useUIStore();
   const { subscribe, unsubscribe } = useWebSocket();
   const { selectedAgent } = useAgentsStore();
 
-  const submitPrompt = useCallback(async () => {
-    if (!prompt.trim()) {
+  const submitPrompt = useCallback(async (promptOverride?: string) => {
+    const promptToUse = promptOverride || prompt || '';
+    if (typeof promptToUse !== 'string' || !promptToUse.trim()) {
       addToast({ type: 'error', title: 'Prompt is required' });
       return;
     }
@@ -42,7 +46,7 @@ export function useExecution() {
     setError(null);
 
     try {
-      const response = await executePrompt(prompt, selectedAgent?.id) as { success: boolean; data?: { executionId: string; plan: import('@opsuna/shared').ExecutionPlan; intentToken?: string }; error?: { message: string } };
+      const response = await executePrompt(promptToUse, selectedAgent?.id) as { success: boolean; data?: { executionId: string; plan: import('@opsuna/shared').ExecutionPlan; intentToken?: string }; error?: { message: string } };
 
       if (response.success && response.data) {
         const { executionId, plan, intentToken: token } = response.data;
