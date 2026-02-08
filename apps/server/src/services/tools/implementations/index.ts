@@ -9,3 +9,4 @@ export { deployProduction } from './deploy_production';
 export { checkCIStatus } from './check_ci_status';
 export { createJiraTicket } from './create_jira_ticket';
 export { runDatabaseMigration } from './run_database_migration';
+export { listGithubRepos } from './list_github_repos';

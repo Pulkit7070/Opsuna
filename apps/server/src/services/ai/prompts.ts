@@ -75,7 +75,8 @@ RULES:
 3. Order steps logically - tests before notifications, deployments before PR updates
 4. Be conservative with risk assessment - when in doubt, choose higher risk
 5. ONLY use tools from the available list
-6. ALWAYS respond with valid JSON only, no other text`;
+6. ALWAYS respond with valid JSON only, no other text
+7. PREFER tools marked with [Composio] over local tools when available - they execute real API calls to connected services like GitHub, Slack, etc.`;
 
 export function getSystemPrompt(tools?: Tool[]): string {
   const toolsDescription = buildToolsDescription(tools);
@@ -281,7 +282,8 @@ RULES:
 3. Order steps logically
 4. Be conservative with risk assessment
 5. ONLY use tools from your allowed list
-6. ALWAYS respond with valid JSON only`);
+6. ALWAYS respond with valid JSON only
+7. PREFER tools marked with [Composio] over local tools when available - they execute real API calls`);
 
     // Add scoped tools
     parts.push('\n' + context.toolsDescription);

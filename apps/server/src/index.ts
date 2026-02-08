@@ -3,6 +3,7 @@ import { app } from './app';
 import { config } from './lib/config';
 import { prisma } from './lib/prisma';
 import { wsManager } from './services/events';
+import { initializeComposioTools } from './services/tools/composio';
 
 async function bootstrap() {
   // In dev mode, ensure mock user exists for testing
@@ -21,6 +22,11 @@ async function bootstrap() {
     } catch (error) {
       console.warn('[Server] Failed to create mock user:', error);
     }
+  }
+
+  // Initialize Composio tools (load into registry)
+  if (config.composioApiKey) {
+    await initializeComposioTools();
   }
 
   // Create HTTP server

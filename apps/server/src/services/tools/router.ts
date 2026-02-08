@@ -13,6 +13,7 @@ import {
   checkCIStatus,
   createJiraTicket,
   runDatabaseMigration,
+  listGithubRepos,
 } from './implementations';
 
 type ToolImplementation = (
@@ -33,6 +34,7 @@ const localImplementations: Record<string, ToolImplementation> = {
   check_ci_status: checkCIStatus as ToolImplementation,
   create_jira_ticket: createJiraTicket as ToolImplementation,
   run_database_migration: runDatabaseMigration as ToolImplementation,
+  list_github_repos: listGithubRepos as ToolImplementation,
 };
 
 export async function routeToolCall(

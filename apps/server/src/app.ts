@@ -17,6 +17,7 @@ import {
   memoryRouter,
   artifactsRouter,
   agentsRouter,
+  builderRouter,
 } from './routes';
 
 const app = express();
@@ -42,6 +43,7 @@ app.use('/api/rollback', rollbackRouter);
 app.use('/api/tools', toolsRouter);
 app.use('/api/memory', memoryRouter);
 app.use('/api/agents', agentsRouter);
+app.use('/api/builder', builderRouter);
 app.use('/api', artifactsRouter); // Artifacts routes at /api level
 app.use('/health', healthRouter);
 

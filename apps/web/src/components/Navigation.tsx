@@ -12,12 +12,14 @@ import {
   Wrench,
   Menu,
   X,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWebSocket } from '@/hooks/useWebSocket';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { label: 'Builder', href: '/builder', icon: Sparkles },
   { label: 'Chat', href: '/chat', icon: MessageSquare },
   { label: 'Agents', href: '/agents', icon: Bot },
   { label: 'Tools', href: '/tools', icon: Wrench },
