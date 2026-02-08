@@ -16,10 +16,15 @@ export const supabaseAdmin = config.supabaseUrl && config.supabaseServiceRoleKey
  */
 export async function verifyToken(token: string) {
   if (!supabaseAdmin) {
+    console.log('[Auth] supabaseAdmin is null - missing SUPABASE_URL or SERVICE_ROLE_KEY');
     return null;
   }
 
   const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+
+  if (error) {
+    console.log('[Auth] Token verification error:', error.message);
+  }
 
   if (error || !user) {
     return null;

@@ -83,9 +83,11 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
   }
 
   const token = authHeader.split(' ')[1];
+  console.log('[Auth] Token received, length:', token?.length);
 
   try {
     const supabaseUser = await verifyToken(token);
+    console.log('[Auth] Verify result:', supabaseUser ? `User: ${supabaseUser.email}` : 'null');
 
     if (!supabaseUser) {
       // In dev mode, fall back to mock user if Supabase isn't configured
