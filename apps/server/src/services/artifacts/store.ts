@@ -80,7 +80,7 @@ export async function uploadArtifact(input: ArtifactInput): Promise<ArtifactReco
         size,
         storagePath,
         publicUrl,
-        metadata: metadata ? (metadata as Prisma.InputJsonValue) : Prisma.JsonNull,
+        metadata: metadata ? (metadata as Prisma.InputJsonValue) : undefined,
       },
     });
 

@@ -33,7 +33,7 @@ export async function storeMessage(input: ConversationMessageInput): Promise<Con
       executionId: input.executionId,
       metadata: input.metadata
         ? (input.metadata as Prisma.InputJsonValue)
-        : Prisma.JsonNull,
+        : undefined,
     },
   });
 

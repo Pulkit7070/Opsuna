@@ -255,7 +255,7 @@ export async function listUserConnections(userId: string): Promise<ComposioConne
     where: { userId, status: 'revoked' },
     select: { toolName: true },
   });
-  const revokedAppNames = new Set(revokedConnections.map(c => c.toolName.toLowerCase()));
+  const revokedAppNames = new Set(revokedConnections.map((c: { toolName: string }) => c.toolName.toLowerCase()));
   console.log(`[Composio] Revoked apps in DB:`, Array.from(revokedAppNames));
 
   const client = getComposioClient();
@@ -264,7 +264,7 @@ export async function listUserConnections(userId: string): Promise<ComposioConne
     const dbConnections = await prisma.toolConnection.findMany({
       where: { userId, status: 'active' },
     });
-    return dbConnections.map(c => ({
+    return dbConnections.map((c: { id: string; toolName: string; status: string }) => ({
       id: c.id,
       appName: c.toolName,
       status: c.status,
