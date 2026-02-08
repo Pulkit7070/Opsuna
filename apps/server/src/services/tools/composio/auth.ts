@@ -7,43 +7,66 @@ export interface ComposioConnection {
   status: string;
 }
 
-// Map app names to their Composio auth config IDs
-// These are configured in the Composio dashboard
-const AUTH_CONFIG_IDS: Record<string, string> = {
-  github: 'ac_RY8dHYoKhJen',
-  slack: 'ac_vzzEMYnDaVg9',
-  discord: 'ac_Dhv01DCPEbOO',
-};
+// Cache for auth config IDs fetched from Composio API
+// These are dynamically fetched based on your Composio account
+const AUTH_CONFIG_IDS: Record<string, string> = {};
 
 /**
- * Get auth config ID for an app, or fetch from API if not in map
+ * Get auth config ID for an app by fetching from Composio API
  */
 async function getAuthConfigId(appName: string): Promise<string | null> {
   const normalized = appName.toLowerCase();
 
-  // Check our known mappings first
+  // Check cache first
   if (AUTH_CONFIG_IDS[normalized]) {
+    console.log(`[Composio] Using cached auth config for ${appName}: ${AUTH_CONFIG_IDS[normalized]}`);
     return AUTH_CONFIG_IDS[normalized];
   }
 
-  // Try to fetch from Composio API
+  // Fetch from Composio API
   const client = getComposioClient();
-  if (!client) return null;
+  if (!client) {
+    console.error('[Composio] Client not available for fetching auth configs');
+    return null;
+  }
 
   try {
+    console.log(`[Composio] Fetching auth configs from API for ${appName}...`);
     const configs = await client.authConfigs.list();
     const items = (configs as any)?.items || [];
-    const config = items.find((c: any) =>
-      c.appName?.toLowerCase() === normalized ||
-      c.name?.toLowerCase().includes(normalized)
-    );
+
+    console.log(`[Composio] Found ${items.length} auth configs:`, items.map((c: any) => ({
+      id: c.id,
+      appName: c.appName,
+      name: c.name,
+      toolkit: c.toolkit?.slug
+    })));
+
+    // Try to find matching config
+    const config = items.find((c: any) => {
+      const configAppName = c.appName?.toLowerCase() || '';
+      const configName = c.name?.toLowerCase() || '';
+      const toolkitSlug = c.toolkit?.slug?.toLowerCase() || '';
+
+      return configAppName === normalized ||
+             toolkitSlug === normalized ||
+             configName.includes(normalized) ||
+             configAppName.includes(normalized);
+    });
+
     if (config?.id) {
-      // Cache for future use
+      console.log(`[Composio] Found auth config for ${appName}: ${config.id}`);
       AUTH_CONFIG_IDS[normalized] = config.id;
       return config.id;
     }
+
+    console.warn(`[Composio] No auth config found for ${appName}. Available apps:`,
+      items.map((c: any) => c.appName || c.toolkit?.slug).filter(Boolean)
+    );
+    console.warn(`[Composio] To fix: Go to app.composio.dev and set up OAuth for "${appName}"`);
+
   } catch (err) {
-    console.warn(`[Composio] Failed to fetch auth config for ${appName}:`, err);
+    console.error(`[Composio] Failed to fetch auth configs:`, err);
   }
 
   return null;
@@ -224,11 +247,20 @@ export async function checkConnectionStatus(
 
 /**
  * List all connections for a user.
+ * Filters out connections that are marked as revoked in our DB.
  */
 export async function listUserConnections(userId: string): Promise<ComposioConnection[]> {
+  // First, get revoked connections from our DB to filter them out
+  const revokedConnections = await prisma.toolConnection.findMany({
+    where: { userId, status: 'revoked' },
+    select: { toolName: true },
+  });
+  const revokedAppNames = new Set(revokedConnections.map(c => c.toolName.toLowerCase()));
+  console.log(`[Composio] Revoked apps in DB:`, Array.from(revokedAppNames));
+
   const client = getComposioClient();
   if (!client) {
-    // Fall back to DB records
+    // Fall back to DB records (only active ones)
     const dbConnections = await prisma.toolConnection.findMany({
       where: { userId, status: 'active' },
     });
@@ -249,14 +281,17 @@ export async function listUserConnections(userId: string): Promise<ComposioConne
     // Handle both array and {items: []} response formats
     const connections = Array.isArray(response) ? response : (response as any)?.items || [];
 
-    const mapped = connections.map((c: any) => ({
-      id: c.id,
-      // Use toolkit.slug which is where Composio stores the app name (e.g., "github")
-      appName: c.toolkit?.slug?.toLowerCase() || c.appName?.toLowerCase() || c.integrationId?.toLowerCase() || '',
-      status: c.status === 'ACTIVE' ? 'active' : c.status?.toLowerCase() || 'unknown',
-    }));
+    const mapped = connections
+      .map((c: any) => ({
+        id: c.id,
+        // Use toolkit.slug which is where Composio stores the app name (e.g., "github")
+        appName: c.toolkit?.slug?.toLowerCase() || c.appName?.toLowerCase() || c.integrationId?.toLowerCase() || '',
+        status: c.status === 'ACTIVE' ? 'active' : c.status?.toLowerCase() || 'unknown',
+      }))
+      // Filter out connections that are revoked in our DB
+      .filter((c: ComposioConnection) => !revokedAppNames.has(c.appName));
 
-    console.log(`[Composio] Mapped connections:`, JSON.stringify(mapped, null, 2));
+    console.log(`[Composio] Mapped connections (after filtering revoked):`, JSON.stringify(mapped, null, 2));
     return mapped;
   } catch (error) {
     console.error('[Composio] Failed to list connections:', error);
@@ -269,25 +304,43 @@ export async function listUserConnections(userId: string): Promise<ComposioConne
  */
 export async function revokeConnection(userId: string, appName: string): Promise<boolean> {
   const client = getComposioClient();
+  const normalizedAppName = appName.toLowerCase();
+
+  console.log(`[Composio] Revoking connection for user ${userId}, app: ${normalizedAppName}`);
 
   try {
-    // Update our DB
+    // Update our DB first
     await prisma.toolConnection.updateMany({
-      where: { userId, toolName: appName.toLowerCase() },
+      where: { userId, toolName: normalizedAppName },
       data: { status: 'revoked', revokedAt: new Date() },
     });
+    console.log(`[Composio] DB status updated to revoked`);
 
     if (client) {
       const response = await client.connectedAccounts.list({ userUuid: userId } as any);
       const connections = Array.isArray(response) ? response : (response as any)?.items || [];
 
-      const conn = connections.find((c: any) =>
-        c.appName?.toLowerCase() === appName.toLowerCase() ||
-        c.integrationId?.toLowerCase() === appName.toLowerCase()
-      );
+      console.log(`[Composio] Found ${connections.length} connections for user`);
+
+      // Match using toolkit.slug (same as listUserConnections)
+      const conn = connections.find((c: any) => {
+        const toolkitSlug = c.toolkit?.slug?.toLowerCase() || '';
+        const connAppName = c.appName?.toLowerCase() || '';
+        const integrationId = c.integrationId?.toLowerCase() || '';
+
+        return toolkitSlug === normalizedAppName ||
+               connAppName === normalizedAppName ||
+               integrationId === normalizedAppName ||
+               toolkitSlug.includes(normalizedAppName) ||
+               normalizedAppName.includes(toolkitSlug);
+      });
 
       if (conn) {
+        console.log(`[Composio] Found matching connection: ${conn.id}, deleting...`);
         await client.connectedAccounts.delete(conn.id);
+        console.log(`[Composio] Connection deleted from Composio`);
+      } else {
+        console.log(`[Composio] No matching connection found in Composio for ${normalizedAppName}`);
       }
     }
 

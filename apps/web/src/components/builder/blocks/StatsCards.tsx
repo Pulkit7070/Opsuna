@@ -45,9 +45,9 @@ export function StatsCards({
   accentColor = 'violet',
 }: StatsCardsProps) {
   const colClass = {
-    2: 'md:grid-cols-2',
-    3: 'md:grid-cols-3',
-    4: 'md:grid-cols-2 lg:grid-cols-4',
+    2: 'grid-cols-1 sm:grid-cols-2',
+    3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
+    4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
   }[columns];
 
   return (
@@ -55,13 +55,13 @@ export function StatsCards({
       <div className="max-w-6xl mx-auto">
         {title && <h1 className="text-2xl font-bold mb-6 text-white">{title}</h1>}
 
-        <div className={`grid grid-cols-1 ${colClass} gap-4`}>
+        <div className="flex flex-wrap gap-4">
           {stats.map((stat, index) => {
             const Icon = Object.values(iconMap)[index % 4];
             return (
               <div
-                key={stat.label}
-                className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-zinc-700 transition-colors"
+                key={`stat-${index}`}
+                className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-zinc-700 transition-colors flex-1 min-w-[200px]"
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className={`p-3 rounded-xl bg-gradient-to-br ${colorMap[accentColor]} bg-opacity-20`}>

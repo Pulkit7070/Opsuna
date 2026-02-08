@@ -77,7 +77,7 @@ export function LoginForm({
           <p className="text-zinc-400 mt-2">{subtitle}</p>
         </div>
 
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-medium mb-2 text-white">Email address</label>

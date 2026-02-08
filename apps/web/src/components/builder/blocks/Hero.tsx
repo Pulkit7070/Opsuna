@@ -57,11 +57,11 @@ export function Hero({
           </div>
         )}
 
-        <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-zinc-300 to-zinc-500 bg-clip-text text-transparent">
+        <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-zinc-300 to-zinc-500 bg-clip-text text-transparent">
           {title}
         </h1>
 
-        <p className="text-xl text-zinc-400 mb-8 max-w-2xl mx-auto">
+        <p className="text-base sm:text-xl text-zinc-400 mb-8 max-w-2xl mx-auto">
           {subtitle}
         </p>
 
@@ -77,8 +77,8 @@ export function Hero({
 
         {features && features.length > 0 && (
           <div className="flex items-center justify-center gap-6 mt-8 text-sm text-zinc-500 flex-wrap">
-            {features.map((feature) => (
-              <span key={feature} className="flex items-center gap-1">
+            {features.map((feature, index) => (
+              <span key={`feature-${index}`} className="flex items-center gap-1">
                 <Check size={16} className="text-green-500" />
                 {feature}
               </span>

@@ -27,8 +27,30 @@ const mockScenarios: MockScenario[] = [
     getPlan: (prompt: string) => {
       // Extract repo: "in repo owner/name" or "owner/repo"
       const repoMatch = prompt.match(/(?:in\s+(?:repo\s+)?|repo\s+)?([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)/i);
-      const owner = repoMatch?.[1] || 'YOUR_USERNAME';
-      const repo = repoMatch?.[2] || 'YOUR_REPO';
+      const owner = repoMatch?.[1];
+      const repo = repoMatch?.[2];
+
+      // If no repo specified, return helpful guidance
+      if (!owner || !repo) {
+        return {
+          summary: 'Missing repository information',
+          riskLevel: 'LOW',
+          riskReason: 'Cannot proceed without repository details',
+          steps: [
+            {
+              id: `step-${uuid().slice(0, 8)}`,
+              order: 1,
+              toolName: 'post_slack_message',
+              description: 'Please specify the repository. Example: "Create branch feature-xyz in owner/repo from main"',
+              parameters: {
+                channel: '#general',
+                text: 'To create a GitHub branch, please specify: owner/repo and branch name',
+              },
+              riskLevel: 'LOW',
+            },
+          ],
+        };
+      }
 
       // Extract branch name - look for word after "called", "named", or "branch"
       // but exclude common words like "in", "repo", etc.
@@ -39,7 +61,7 @@ const mockScenarios: MockScenario[] = [
 
       // Extract base branch - look for "from <branch>", "based on <branch>", "off <branch>"
       const baseMatch = prompt.match(/(?:from|based on|off)\s+['"]?([a-zA-Z0-9_/-]+)['"]?(?:\s+branch)?/i);
-      const baseBranch = baseMatch?.[1] || 'master'; // Default to master (most common)
+      const baseBranch = baseMatch?.[1] || 'main';
 
       // Creating a branch requires getting the SHA first, so we use commit_multiple_files
       // which can create a branch with a simple file change
@@ -121,8 +143,30 @@ const mockScenarios: MockScenario[] = [
     getPlan: (prompt: string) => {
       // Try to extract repo info from prompt: "in repo owner/name" or "owner/repo"
       const repoMatch = prompt.match(/(?:in\s+(?:repo\s+)?|repo\s+)?([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)/i);
-      const owner = repoMatch?.[1] || 'YOUR_USERNAME';
-      const repo = repoMatch?.[2] || 'YOUR_REPO';
+      const owner = repoMatch?.[1];
+      const repo = repoMatch?.[2];
+
+      // If no repo specified, return a plan that explains what's needed
+      if (!owner || !repo) {
+        return {
+          summary: 'Missing repository information',
+          riskLevel: 'LOW',
+          riskReason: 'Cannot proceed without repository details',
+          steps: [
+            {
+              id: `step-${uuid().slice(0, 8)}`,
+              order: 1,
+              toolName: 'post_slack_message',
+              description: 'Please specify the repository in format: "Create PR in owner/repo from feature-branch to main"',
+              parameters: {
+                channel: '#general',
+                text: 'To create a GitHub PR, please specify: owner/repo, source branch, and target branch',
+              },
+              riskLevel: 'LOW',
+            },
+          ],
+        };
+      }
 
       // Try to extract branch names
       const branchMatch = prompt.match(/from\s+([a-zA-Z0-9_/-]+)\s+to\s+([a-zA-Z0-9_/-]+)/i);
@@ -130,7 +174,7 @@ const mockScenarios: MockScenario[] = [
       const base = branchMatch?.[2] || 'main';
 
       return {
-        summary: 'Create a GitHub pull request',
+        summary: `Create a GitHub pull request in ${owner}/${repo}`,
         riskLevel: 'MEDIUM',
         riskReason: 'Creates a new PR but does not merge or modify existing code',
         steps: [
@@ -154,7 +198,7 @@ const mockScenarios: MockScenario[] = [
             order: 2,
             toolName: getToolName('slack_sends_a_message_to_a_slack_channel', 'post_slack_message'),
             description: 'Notify team about new PR',
-            parameters: { channel: '#pull-requests', text: 'New PR created for review' },
+            parameters: { channel: '#pull-requests', text: `New PR created in ${owner}/${repo} for review` },
             riskLevel: 'LOW',
           },
         ],
@@ -166,15 +210,37 @@ const mockScenarios: MockScenario[] = [
     getPlan: (prompt: string) => {
       // Extract repo: "in repo owner/name" or "owner/repo"
       const repoMatch = prompt.match(/(?:in\s+(?:repo\s+)?|repo\s+)?([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)/i);
-      const owner = repoMatch?.[1] || 'YOUR_USERNAME';
-      const repo = repoMatch?.[2] || 'YOUR_REPO';
+      const owner = repoMatch?.[1];
+      const repo = repoMatch?.[2];
+
+      // If no repo specified, return helpful guidance
+      if (!owner || !repo) {
+        return {
+          summary: 'Missing repository information',
+          riskLevel: 'LOW',
+          riskReason: 'Cannot proceed without repository details',
+          steps: [
+            {
+              id: `step-${uuid().slice(0, 8)}`,
+              order: 1,
+              toolName: 'post_slack_message',
+              description: 'Please specify the repository. Example: "Create issue in owner/repo titled \'Bug fix\'"',
+              parameters: {
+                channel: '#general',
+                text: 'To create a GitHub issue, please specify: owner/repo and issue title',
+              },
+              riskLevel: 'LOW',
+            },
+          ],
+        };
+      }
 
       // Extract title from quotes or "titled X"
       const titleMatch = prompt.match(/titled\s+['"]([^'"]+)['"]/i) || prompt.match(/['"]([^'"]+)['"]/);
       const title = titleMatch?.[1] || 'New issue from Opsuna';
 
       return {
-        summary: 'Create a GitHub issue',
+        summary: `Create a GitHub issue in ${owner}/${repo}`,
         riskLevel: 'LOW',
         riskReason: 'Creates an issue without modifying code',
         steps: [

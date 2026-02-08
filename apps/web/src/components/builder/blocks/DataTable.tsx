@@ -94,26 +94,26 @@ export function DataTable({
   };
 
   return (
-    <div className="min-h-full bg-zinc-950 p-8">
+    <div className="min-h-full bg-zinc-950 p-4 sm:p-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-white">{title}</h1>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-white">{title}</h1>
           {searchable && (
-            <div className="relative">
+            <div className="relative w-full sm:w-auto">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                 placeholder="Search..."
-                className="bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-violet-500 w-64 text-white"
+                className="bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-violet-500 w-full sm:w-64 text-white"
               />
             </div>
           )}
         </div>
 
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
-          <table className="w-full">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-x-auto">
+          <table className="w-full min-w-[500px]">
             <thead>
               <tr className="border-b border-zinc-800">
                 {columns.map((col) => (

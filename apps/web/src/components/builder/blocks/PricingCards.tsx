@@ -106,15 +106,11 @@ export function PricingCards({
           </div>
         </div>
 
-        <div className={`grid gap-6 ${
-          plans.length === 2 ? 'md:grid-cols-2 max-w-3xl mx-auto' :
-          plans.length === 3 ? 'md:grid-cols-3' :
-          'md:grid-cols-2 lg:grid-cols-4'
-        }`}>
-          {plans.map((plan) => (
+        <div className="flex flex-wrap justify-center gap-4">
+          {plans.map((plan, planIndex) => (
             <div
-              key={plan.name}
-              className={`bg-zinc-900 border rounded-2xl p-6 relative ${
+              key={`${plan.name}-${planIndex}`}
+              className={`bg-zinc-900 border rounded-2xl p-6 relative flex-1 min-w-[260px] max-w-[340px] ${
                 plan.popular ? colors.border : 'border-zinc-800'
               }`}
             >
@@ -146,14 +142,14 @@ export function PricingCards({
               </button>
 
               <div className="space-y-3">
-                {(plan.features || []).map((feature) => (
-                  <div key={feature} className="flex items-center gap-2 text-sm">
+                {(plan.features || []).map((feature, featureIndex) => (
+                  <div key={`feature-${featureIndex}`} className="flex items-center gap-2 text-sm">
                     <Check size={16} className="text-emerald-400" />
                     <span className="text-white">{feature}</span>
                   </div>
                 ))}
-                {(plan.notIncluded || []).map((feature) => (
-                  <div key={feature} className="flex items-center gap-2 text-sm text-zinc-500">
+                {(plan.notIncluded || []).map((feature, notIncludedIndex) => (
+                  <div key={`not-${notIncludedIndex}`} className="flex items-center gap-2 text-sm text-zinc-500">
                     <X size={16} />
                     <span>{feature}</span>
                   </div>

@@ -21,7 +21,8 @@ import {
 type ToolImplementation = (
   callId: string,
   params: Record<string, unknown>,
-  onLog: (log: ToolLog) => void
+  onLog: (log: ToolLog) => void,
+  userId?: string
 ) => Promise<ToolResult>;
 
 const localImplementations: Record<string, ToolImplementation> = {
@@ -103,5 +104,8 @@ export async function routeToolCall(
     };
   }
 
-  return implementation(callId, params, onLog);
+  return implementation(callId, params, onLog, userId);
 }
+
+// Alias for backwards compatibility
+export const executeTool = routeToolCall;

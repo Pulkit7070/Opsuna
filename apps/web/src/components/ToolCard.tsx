@@ -1,13 +1,15 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Plug, Unplug, ExternalLink, Shield, ShieldAlert, ShieldCheck, Wrench } from 'lucide-react';
+import { Plug, Unplug, ExternalLink, Shield, ShieldAlert, ShieldCheck, Wrench, Loader2 } from 'lucide-react';
 import { ToolItem } from '@/store/tools';
 import { Badge } from '@/components/ui/badge';
 
 interface ToolCardProps {
   tool: ToolItem;
   isConnected: boolean;
+  isConnecting?: boolean;
+  isDisconnecting?: boolean;
   onConnect: (appName: string) => void;
   onDisconnect: (appName: string) => void;
 }
@@ -18,9 +20,10 @@ const riskConfig = {
   HIGH: { icon: ShieldAlert, variant: 'destructive' as const, label: 'High Risk' },
 };
 
-export function ToolCard({ tool, isConnected, onConnect, onDisconnect }: ToolCardProps) {
+export function ToolCard({ tool, isConnected, isConnecting, isDisconnecting, onConnect, onDisconnect }: ToolCardProps) {
   const risk = riskConfig[tool.riskLevel];
   const RiskIcon = risk.icon;
+  const isBusy = isConnecting || isDisconnecting;
 
   return (
     <motion.div
@@ -79,25 +82,47 @@ export function ToolCard({ tool, isConnected, onConnect, onDisconnect }: ToolCar
           {isConnected ? (
             <button
               onClick={() => onDisconnect(tool.appName || tool.name)}
+              disabled={isBusy}
               className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md
                          bg-bg-elevated border border-border-subtle
                          hover:border-destructive/30 hover:bg-destructive/5
-                         transition-all text-xs text-text-secondary hover:text-destructive"
+                         transition-all text-xs text-text-secondary hover:text-destructive
+                         disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-bg-elevated disabled:hover:border-border-subtle disabled:hover:text-text-secondary"
             >
-              <Unplug className="w-3 h-3" />
-              Disconnect
+              {isDisconnecting ? (
+                <>
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Disconnecting...
+                </>
+              ) : (
+                <>
+                  <Unplug className="w-3 h-3" />
+                  Disconnect
+                </>
+              )}
             </button>
           ) : (
             <button
               onClick={() => onConnect(tool.appName || tool.name)}
+              disabled={isBusy}
               className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md
                          bg-accent/10 border border-accent/20
                          hover:border-accent/40 hover:bg-accent/20
-                         transition-all text-xs text-accent"
+                         transition-all text-xs text-accent
+                         disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Plug className="w-3 h-3" />
-              Connect
-              <ExternalLink className="w-3 h-3" />
+              {isConnecting ? (
+                <>
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                <>
+                  <Plug className="w-3 h-3" />
+                  Connect
+                  <ExternalLink className="w-3 h-3" />
+                </>
+              )}
             </button>
           )}
         </div>

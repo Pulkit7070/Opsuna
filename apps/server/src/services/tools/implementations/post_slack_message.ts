@@ -1,110 +1,171 @@
 import { ToolResult, ToolLog } from '@opsuna/shared';
+import { getComposioClient } from '../composio/client';
 
-// Fake Slack users for realistic responses
-const SLACK_USERS = [
-  { id: 'U01ABC123', name: 'alice', real_name: 'Alice Johnson' },
-  { id: 'U02DEF456', name: 'bob', real_name: 'Bob Smith' },
-  { id: 'U03GHI789', name: 'charlie', real_name: 'Charlie Brown' },
-];
-
-// Fake Slack channels
-const SLACK_CHANNELS: Record<string, { id: string; name: string; members: number }> = {
-  '#engineering': { id: 'C01ENG001', name: 'engineering', members: 42 },
-  '#devops': { id: 'C02OPS002', name: 'devops', members: 15 },
-  '#general': { id: 'C03GEN003', name: 'general', members: 128 },
-  '#deployments': { id: 'C04DEP004', name: 'deployments', members: 23 },
-  '#alerts': { id: 'C05ALR005', name: 'alerts', members: 31 },
-};
-
-export async function postSlackMessage(
-  callId: string,
-  params: Record<string, unknown>,
-  onLog: (log: ToolLog) => void
-): Promise<ToolResult> {
-  const startTime = Date.now();
-  const logs: ToolLog[] = [];
-
-  const addLog = (level: ToolLog['level'], message: string) => {
-    const log: ToolLog = { timestamp: new Date(), level, message };
-    logs.push(log);
-    onLog(log);
-  };
+/**
+ * Get Composio connected account for Slack
+ */
+async function getSlackConnection(userId: string): Promise<string | null> {
+  const client = getComposioClient();
+  if (!client) return null;
 
   try {
-    // Validate required parameters
-    const channel = params.channel as string;
-    const message = params.message as string;
+    const response = await client.connectedAccounts.list({
+      userUuid: userId,
+    } as any);
 
-    if (!channel || !message) {
-      throw new Error('Missing required parameters: channel and message');
+    const connections = Array.isArray(response) ? response : (response as any)?.items || [];
+
+    // Find an ACTIVE Slack connection
+    const conn = connections.find((c: any) => {
+      const connApp = c.toolkit?.slug?.toLowerCase() || c.appName?.toLowerCase() || '';
+      const isSlack = connApp === 'slack' || connApp.includes('slack');
+      const isActive = c.status === 'ACTIVE' || c.status === 'active';
+      return isSlack && isActive;
+    });
+
+    return conn?.id || null;
+  } catch (error) {
+    console.error('[Slack] Failed to check Composio connection:', error);
+    return null;
+  }
+}
+
+/**
+ * Execute Slack message via Composio
+ */
+async function sendViaComposio(
+  callId: string,
+  channel: string,
+  message: string,
+  userId: string,
+  connectedAccountId: string,
+  onLog: (log: ToolLog) => void
+): Promise<ToolResult> {
+  const client = getComposioClient()!;
+  const startTime = Date.now();
+
+  onLog({
+    timestamp: new Date(),
+    level: 'info',
+    message: `Sending message to ${channel} via Slack API...`,
+  });
+
+  try {
+    // Use Composio's Slack send message action
+    const result = await client.tools.execute('slack_sends_a_message_to_a_slack_channel', {
+      userId,
+      connectedAccountId,
+      arguments: {
+        channel: channel.replace('#', ''),
+        text: message,
+      },
+      dangerouslySkipVersionCheck: true,
+    } as any);
+
+    const duration = Date.now() - startTime;
+    const isSuccess = result?.successful !== false && !result?.error;
+
+    if (isSuccess) {
+      onLog({
+        timestamp: new Date(),
+        level: 'info',
+        message: `Message sent successfully to ${channel}`,
+      });
     }
-
-    const channelKey = channel.startsWith('#') ? channel : `#${channel}`;
-    const channelInfo = SLACK_CHANNELS[channelKey] || {
-      id: `C${Date.now().toString(36).toUpperCase()}`,
-      name: params.channel.replace('#', ''),
-      members: Math.floor(Math.random() * 50) + 5,
-    };
-
-    addLog('info', `Connecting to Slack workspace...`);
-    await delay(200);
-
-    addLog('info', `Resolving channel ${channelKey}...`);
-    await delay(150);
-
-    addLog('info', `Found channel: ${channelInfo.name} (${channelInfo.members} members)`);
-    await delay(100);
-
-    addLog('info', `Posting message (${message.length} characters)...`);
-    await delay(300);
-
-    const messageTs = `${Math.floor(Date.now() / 1000)}.${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
-
-    addLog('info', `Message posted successfully to ${channelKey}`);
-
-    // Simulate reaction from bot
-    await delay(100);
-    addLog('info', `Received delivery confirmation from Slack`);
 
     return {
       callId,
       toolName: 'post_slack_message',
-      success: true,
-      data: {
-        ok: true,
-        channel: channelInfo.id,
-        channelName: channelInfo.name,
-        ts: messageTs,
-        message: {
-          type: 'message',
-          subtype: 'bot_message',
-          text: message,
-          ts: messageTs,
-          username: 'Opsuna Bot',
-          icons: { emoji: ':robot_face:' },
-        },
-        permalink: `https://workspace.slack.com/archives/${channelInfo.id}/p${messageTs.replace('.', '')}`,
-      },
-      duration: Date.now() - startTime,
-      logs,
+      success: isSuccess,
+      data: result?.data || result,
+      error: !isSuccess
+        ? {
+            code: 'SLACK_SEND_FAILED',
+            message: result?.error || 'Failed to send Slack message',
+            recoverable: true,
+          }
+        : undefined,
+      duration,
+      logs: [],
     };
   } catch (error) {
-    addLog('error', `Failed to post message: ${error}`);
+    const duration = Date.now() - startTime;
+    const message = error instanceof Error ? error.message : String(error);
+
+    onLog({
+      timestamp: new Date(),
+      level: 'error',
+      message: `Slack send failed: ${message}`,
+    });
+
     return {
       callId,
       toolName: 'post_slack_message',
       success: false,
       error: {
-        code: 'SLACK_POST_FAILED',
-        message: String(error),
+        code: 'SLACK_ERROR',
+        message,
         recoverable: true,
       },
-      duration: Date.now() - startTime,
-      logs,
+      duration,
+      logs: [],
     };
   }
 }
 
-function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+export async function postSlackMessage(
+  callId: string,
+  params: Record<string, unknown>,
+  onLog: (log: ToolLog) => void,
+  userId?: string
+): Promise<ToolResult> {
+  const startTime = Date.now();
+
+  // Validate required parameters
+  const channel = params.channel as string;
+  const message = params.message as string;
+
+  if (!channel || !message) {
+    return {
+      callId,
+      toolName: 'post_slack_message',
+      success: false,
+      error: {
+        code: 'MISSING_PARAMS',
+        message: 'Missing required parameters: channel and message',
+        recoverable: false,
+      },
+      duration: 0,
+      logs: [],
+    };
+  }
+
+  // Check if user has Slack connected via Composio
+  if (userId) {
+    const connectedAccountId = await getSlackConnection(userId);
+
+    if (connectedAccountId) {
+      return sendViaComposio(callId, channel, message, userId, connectedAccountId, onLog);
+    }
+  }
+
+  // No Composio connection - return helpful error
+  onLog({
+    timestamp: new Date(),
+    level: 'warn',
+    message: 'Slack not connected - message will not be sent',
+  });
+
+  return {
+    callId,
+    toolName: 'post_slack_message',
+    success: false,
+    error: {
+      code: 'SLACK_NOT_CONNECTED',
+      message: 'Slack is not connected. Please go to Tools page and connect your Slack workspace to send messages.',
+      recoverable: true,
+    },
+    duration: Date.now() - startTime,
+    logs: [],
+  };
 }

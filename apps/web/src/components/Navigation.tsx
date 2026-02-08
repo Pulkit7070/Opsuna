@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Zap,
   LayoutDashboard,
   MessageSquare,
   Bot,
@@ -13,9 +12,11 @@ import {
   Menu,
   X,
   Sparkles,
+  BookOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWebSocket } from '@/hooks/useWebSocket';
+import { Logo } from '@/components/Logo';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -35,14 +36,8 @@ export function Navigation() {
       <header className="border-b border-border-subtle/30 sticky top-0 z-40 bg-bg-primary/95 backdrop-blur-xl">
         <div className="container mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-              <Zap className="w-4 h-4 text-accent" />
-            </div>
-            <span className="text-xl font-semibold tracking-tight">
-              <span className="text-text-primary">Opsuna</span>
-              <span className="text-accent">.</span>
-            </span>
+          <Link href="/" className="group hover:opacity-90 transition-opacity">
+            <Logo size="md" />
           </Link>
 
           {/* Desktop Navigation */}
@@ -67,8 +62,19 @@ export function Navigation() {
             })}
           </nav>
 
-          {/* Right side - Status + Mobile menu */}
+          {/* Right side - Docs + Status + Mobile menu */}
           <div className="flex items-center gap-3">
+            {/* Docs Button */}
+            <a
+              href="/docs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-medium text-text-secondary hover:text-accent border border-border-subtle hover:border-accent/50 rounded-lg transition-all hover:bg-accent/5"
+            >
+              <BookOpen className="w-4 h-4" />
+              Docs
+            </a>
+
             {/* Connection Status */}
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-bg-surface/50 border border-border-subtle">
               <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-accent' : 'bg-text-muted'}`}>
@@ -135,6 +141,17 @@ export function Navigation() {
                     </Link>
                   );
                 })}
+                {/* Docs link in mobile menu */}
+                <a
+                  href="/docs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
+                >
+                  <BookOpen className="w-5 h-5" />
+                  Documentation
+                </a>
               </div>
             </motion.nav>
           </>

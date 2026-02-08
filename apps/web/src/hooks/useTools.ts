@@ -100,14 +100,22 @@ export function useTools() {
     }
   }, [fetchConnections]);
 
-  const disconnectApp = useCallback(async (appName: string) => {
+  const disconnectApp = useCallback(async (appName: string): Promise<boolean> => {
     try {
-      await apiClient(`/api/tools/composio/connections/${appName}`, {
+      console.log('[useTools] Disconnecting app:', appName);
+      const res = await apiClient(`/api/tools/composio/connections/${appName}`, {
         method: 'DELETE',
       });
-      await fetchConnections();
-    } catch {
-      // Ignore
+      console.log('[useTools] Disconnect response:', res);
+
+      if (res.success) {
+        await fetchConnections();
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('[useTools] Disconnect error:', err);
+      return false;
     }
   }, [fetchConnections]);
 

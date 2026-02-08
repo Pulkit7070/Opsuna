@@ -7,7 +7,6 @@ import {
   Eye,
   Download,
   Save,
-  Sparkles,
   PanelLeftClose,
   PanelLeft,
   Copy,
@@ -27,6 +26,7 @@ import {
   Wrench
 } from 'lucide-react';
 import Link from 'next/link';
+import { LogoIcon } from '@/components/Logo';
 import { BuilderChat } from '@/components/builder/BuilderChat';
 import { CodePreview } from '@/components/builder/CodePreview';
 import { CodeEditor } from '@/components/builder/CodeEditor';
@@ -169,10 +169,12 @@ export default function BuilderPage() {
           </button>
 
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-lg flex items-center justify-center">
-              <Sparkles size={14} />
-            </div>
-            <span className="font-semibold text-sm">Opsuna Builder</span>
+            <LogoIcon size="sm" />
+            <span className="font-semibold text-sm">
+              <span className="text-white">Opsuna</span>
+              <span className="text-cyan-400">.</span>
+              <span className="text-zinc-400 font-normal ml-1">Builder</span>
+            </span>
           </div>
 
           {currentProject && (
@@ -187,11 +189,11 @@ export default function BuilderPage() {
               onClick={() => setBuilderMode('tambo')}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                 builderMode === 'tambo'
-                  ? 'bg-violet-600 text-white'
+                  ? 'bg-cyan-600 text-white'
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
-              <Sparkles size={12} />
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
               Live UI
             </button>
             <button
@@ -277,7 +279,7 @@ export default function BuilderPage() {
 
           <button
             onClick={() => setShowExportModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 rounded-lg transition-colors font-medium text-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 rounded-lg transition-colors font-medium text-sm"
           >
             <Download size={14} />
             Export
@@ -334,7 +336,7 @@ export default function BuilderPage() {
       <div className="flex-1 flex overflow-hidden">
         {builderMode === 'tambo' ? (
           /* Tambo Live UI Builder */
-          <TamboBuilder />
+          <TamboBuilder deviceMode={deviceMode} />
         ) : (
           /* Code Generation Builder */
           <>
@@ -364,13 +366,13 @@ export default function BuilderPage() {
               <div
                 onMouseDown={handleMouseDown}
                 className={`absolute right-0 top-0 bottom-0 w-2 cursor-col-resize transition-all group ${
-                  isResizing ? 'bg-violet-500' : 'bg-gradient-to-b from-transparent via-zinc-600/30 to-transparent hover:via-violet-500/50'
+                  isResizing ? 'bg-cyan-500' : 'bg-gradient-to-b from-transparent via-zinc-600/30 to-transparent hover:via-cyan-500/50'
                 }`}
               >
                 <div className={`absolute right-0 top-1/2 -translate-y-1/2 -translate-x-1/2 p-1.5 rounded-md bg-zinc-800 border border-zinc-700/50 transition-all ${
-                  isResizing ? 'opacity-100 border-violet-500/50' : 'opacity-50 group-hover:opacity-100'
+                  isResizing ? 'opacity-100 border-cyan-500/50' : 'opacity-50 group-hover:opacity-100'
                 }`}>
-                  <GripVertical size={14} className={`${isResizing ? 'text-violet-400' : 'text-zinc-500 group-hover:text-zinc-300'}`} />
+                  <GripVertical size={14} className={`${isResizing ? 'text-cyan-400' : 'text-zinc-500 group-hover:text-zinc-300'}`} />
                 </div>
               </div>
             </div>
@@ -463,7 +465,7 @@ export default function BuilderPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-violet-600 rounded-full flex items-center gap-2 shadow-lg shadow-violet-500/25 z-40"
+            className="fixed bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-cyan-600 rounded-full flex items-center gap-2 shadow-lg shadow-cyan-500/25 z-40"
           >
             <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
             <span className="text-sm font-medium">Generating...</span>

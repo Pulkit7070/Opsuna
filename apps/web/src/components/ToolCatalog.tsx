@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Filter, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { useTools } from '@/hooks/useTools';
@@ -35,15 +35,65 @@ export function ToolCatalog() {
     filter,
     setFilter,
     fetchTools,
+    fetchConnections,
     connectApp,
     disconnectApp,
+    checkConnection,
     isAppConnected,
   } = useTools();
 
   const [searchInput, setSearchInput] = useState('');
   const [connecting, setConnecting] = useState<string | null>(null);
+  const [disconnecting, setDisconnecting] = useState<string | null>(null);
   const [connectError, setConnectError] = useState<string | null>(null);
   const [connectSuccess, setConnectSuccess] = useState<string | null>(null);
+  const popupRef = useRef<Window | null>(null);
+
+  // Monitor popup window - if user closes it manually, clear connecting state
+  useEffect(() => {
+    if (!connecting || !popupRef.current) return;
+
+    const checkPopup = setInterval(() => {
+      if (popupRef.current?.closed) {
+        console.log('[ToolCatalog] Popup closed, checking connection status...');
+        // Popup was closed - refresh connections to see if it succeeded
+        fetchConnections().then(() => {
+          setConnecting(null);
+        });
+        clearInterval(checkPopup);
+      }
+    }, 500);
+
+    return () => clearInterval(checkPopup);
+  }, [connecting, fetchConnections]);
+
+  // Listen for OAuth callback messages from popup window
+  useEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.data?.type === 'composio-auth-complete') {
+        console.log('[ToolCatalog] Received OAuth callback:', event.data);
+        const appName = event.data.appName;
+
+        if (event.data.success) {
+          // Check connection status at Composio
+          if (appName) {
+            await checkConnection(appName);
+          }
+          // Refresh all connections to update UI
+          await fetchConnections();
+          setConnectSuccess(`Successfully connected to ${appName || 'app'}!`);
+        } else {
+          setConnectError(event.data.error || 'OAuth connection failed');
+        }
+
+        // Clear connecting state
+        setConnecting(null);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [checkConnection, fetchConnections]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,8 +110,12 @@ export function ToolCatalog() {
     if (result) {
       if (result.alreadyConnected) {
         setConnectSuccess(result.message || `You're already connected to ${appName}!`);
+        setConnecting(null); // Clear immediately for already connected
       } else if (result.redirectUrl) {
-        window.open(result.redirectUrl, 'composio-auth', 'width=600,height=700,popup=true');
+        // Open OAuth popup - keep connecting state until message callback
+        popupRef.current = window.open(result.redirectUrl, 'composio-auth', 'width=600,height=700,popup=true');
+        // Don't clear connecting here - will be cleared by message listener or popup monitor
+        return;
       }
     } else {
       setConnectError(
@@ -73,7 +127,19 @@ export function ToolCatalog() {
   };
 
   const handleDisconnect = async (appName: string) => {
-    await disconnectApp(appName);
+    setDisconnecting(appName);
+    setConnectError(null);
+    setConnectSuccess(null);
+
+    const success = await disconnectApp(appName);
+
+    if (success) {
+      setConnectSuccess(`Successfully disconnected from ${appName}`);
+    } else {
+      setConnectError(`Failed to disconnect from ${appName}`);
+    }
+
+    setDisconnecting(null);
   };
 
   return (
@@ -193,15 +259,20 @@ export function ToolCatalog() {
           animate={{ opacity: 1 }}
           className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
         >
-          {tools.map((tool) => (
-            <ToolCard
-              key={tool.name}
-              tool={tool}
-              isConnected={isAppConnected(tool.appName || tool.name)}
-              onConnect={handleConnect}
-              onDisconnect={handleDisconnect}
-            />
-          ))}
+          {tools.map((tool) => {
+            const toolAppName = tool.appName || tool.name;
+            return (
+              <ToolCard
+                key={tool.name}
+                tool={tool}
+                isConnected={isAppConnected(toolAppName)}
+                isConnecting={connecting === toolAppName}
+                isDisconnecting={disconnecting === toolAppName}
+                onConnect={handleConnect}
+                onDisconnect={handleDisconnect}
+              />
+            );
+          })}
         </motion.div>
       ) : (
         !isLoading && (

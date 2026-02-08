@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { ToolLog } from '@opsuna/shared';
 import { registry } from '../services/tools/registry';
 import { executeTool } from '../services/tools/router';
 import {
@@ -250,10 +251,10 @@ router.post('/execute', async (req, res, next) => {
     const logs: Array<{ timestamp: Date; level: string; message: string }> = [];
 
     const result = await executeTool(
-      toolName,
       callId,
+      toolName,
       parameters || {},
-      (log) => logs.push(log),
+      (log: ToolLog) => logs.push(log),
       userId
     );
 

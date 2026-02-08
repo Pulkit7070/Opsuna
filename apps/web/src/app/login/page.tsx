@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { Logo } from '@/components/Logo';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -65,10 +66,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-bg-primary flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-semibold text-text-primary mb-2">
-            Opsuna Tambo
-          </h1>
+        <div className="flex flex-col items-center mb-8">
+          <Logo size="xl" className="mb-3" />
           <p className="text-text-secondary text-sm">
             AI-powered action orchestration
           </p>

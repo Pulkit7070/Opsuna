@@ -2,206 +2,83 @@
 
 import { useState } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
-import { useExecution } from '@/hooks/useExecution';
 import { useWebSocket } from '@/hooks/useWebSocket';
-import { useLogs } from '@/store/execution';
-import { PromptInput } from '@/components/PromptInput';
-import { ExecutionPanel } from '@/components/ExecutionPanel';
-import { HistoryList } from '@/components/HistoryList';
 import { ToastContainer } from '@/components/Toast';
-import {
-  ChevronDown,
-  Zap,
-  Shield,
-  Clock,
-  ArrowRight,
-  Terminal,
-  GitBranch,
-  MessageSquare,
-  RotateCcw,
-} from 'lucide-react';
+import { ChevronDown, ArrowRight, BookOpen } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useTools } from '@/hooks/useTools';
-import { AgentSelector } from '@/components/AgentSelector';
-import { Badge } from '@/components/ui/badge';
-import { CTASection } from '@/components/ui/hero-dithering-card';
-import { AnimatedBadge } from '@/components/ui/animated-badge';
+import { Logo } from '@/components/Logo';
 
 const NAV_ITEMS = [
-  { label: 'Dashboard', href: '/' },
-  { label: 'Chat', href: '/chat' },
-  { label: 'Builder', href: '/builder' },
-  { label: 'Agents', href: '/agents' },
-  { label: 'Tools', href: '/tools' },
+  { label: 'Features', href: '#features' },
+  { label: 'How It Works', href: '#how-it-works' },
+  { label: 'Components', href: '#components' },
+  { label: 'FAQ', href: '#faq' },
 ];
 
 const FEATURES = [
   {
-    title: 'AI UI Builder',
-    description: 'Generate beautiful UIs instantly with Tambo AI. Describe what you want, get production-ready components.',
-    gradient: 'from-violet-500/20 to-transparent',
+    title: 'Natural Language to UI',
+    description: 'Describe what you want in plain English. Tambo\'s AI decides which components to render dynamically.',
+    gradient: 'from-cyan-500/20 to-teal-500/20',
   },
   {
-    title: 'Smart Agents',
-    description: 'Specialized AI agents for research, data analysis, and DevOps. Each with tailored tools and memory.',
-    gradient: 'from-accent/20 to-transparent',
+    title: 'Dynamic Component Rendering',
+    description: 'Components are chosen and rendered in real-time based on conversation context and user intent.',
+    gradient: 'from-violet-500/20 to-purple-500/20',
   },
   {
-    title: 'Tool Orchestration',
-    description: 'Connect GitHub, Slack, and 300+ tools. Execute complex workflows with natural language commands.',
-    gradient: 'from-success/20 to-transparent',
+    title: 'Registered Components',
+    description: 'Register your React components with Tambo. The AI learns when and how to use each one.',
+    gradient: 'from-amber-500/20 to-orange-500/20',
   },
   {
-    title: 'Safe Execution',
-    description: 'Preview every action before it runs. Full audit trails, intent tokens, and instant rollbacks.',
-    gradient: 'from-warning/20 to-transparent',
+    title: 'Contextual Adaptation',
+    description: 'The UI adapts to what users are trying to do. No more learning complex workflows.',
+    gradient: 'from-pink-500/20 to-rose-500/20',
+  },
+];
+
+const COMPONENTS = [
+  {
+    name: 'ExecutionPlan',
+    description: 'Renders step-by-step action plans with risk assessment and tool calls',
+    trigger: '"Deploy staging and notify the team"',
+  },
+  {
+    name: 'DataChart',
+    description: 'Dynamically generates charts and visualizations from data queries',
+    trigger: '"Show me a chart of monthly revenue"',
+  },
+  {
+    name: 'MermaidDiagram',
+    description: 'Creates architecture and flow diagrams from code analysis',
+    trigger: '"Analyze the codebase architecture"',
+  },
+  {
+    name: 'ToolResult',
+    description: 'Displays tool execution results with status and output formatting',
+    trigger: '"Run the smoke tests"',
   },
 ];
 
 const FAQ_ITEMS = [
   {
-    question: 'What is Opsuna Tambo?',
-    answer: 'Opsuna is an AI-powered toolchain composer that transforms natural language into executable action chains. Think of it as having a senior DevOps engineer who never sleeps, never makes typos, and always asks for confirmation before doing anything risky.',
+    question: 'What is Generative UI?',
+    answer: 'Generative UI is a paradigm where AI decides which components to render based on natural language conversations. Instead of users navigating through static interfaces, the UI dynamically adapts to show the right components for what they\'re trying to accomplish.',
   },
   {
-    question: 'How does the preview system work?',
-    answer: 'Every action is previewed before execution. You see exactly what will happen—which APIs will be called, what data will be sent, what the expected outcome is. You assess the risk level and approve or modify the plan before anything runs.',
+    question: 'How does Tambo work?',
+    answer: 'You register your React components with Tambo, and the AI learns when to use each one. When users describe what they want in natural language, Tambo analyzes the intent and renders the appropriate components dynamically.',
   },
   {
-    question: 'What can I automate?',
-    answer: 'Deploy services, run tests, create pull requests, send notifications, manage infrastructure, query databases, generate reports—anything you can do with an API, Opsuna can orchestrate. Tools are extensible through the MCP protocol.',
+    question: 'What components can I register?',
+    answer: 'Any React component can be registered with Tambo. Charts, forms, data tables, modals, cards, visualizations—the AI will learn when each component is most appropriate based on the conversation context.',
   },
   {
-    question: 'Is it safe for production use?',
-    answer: 'Absolutely. High-risk actions require explicit typed confirmation. Every execution is logged with full audit trails. Actions are reversible where possible. Intent tokens expire in 5 minutes to prevent stale confirmations.',
+    question: 'How is this different from chatbots?',
+    answer: 'Traditional chatbots respond with text. Generative UI responds with actual UI components. Instead of describing what to do, the AI renders interactive elements that let users take action directly.',
   },
 ];
-
-const STATS = [
-  { value: '98%', label: 'Success Rate' },
-  { value: '5min', label: 'Avg. Saved per Task' },
-  { value: '300+', label: 'Tools Available' },
-];
-
-
-function HeroSection({ stats }: { stats: { value: string; label: string }[] }) {
-  return (
-    <section className="py-8 md:py-12 w-full flex justify-center items-center px-4 md:px-6">
-      <div className="w-full max-w-7xl relative group">
-        <div className="relative overflow-hidden rounded-[32px] md:rounded-[48px] border border-border-subtle bg-bg-surface shadow-lg min-h-[550px] md:min-h-[650px] flex flex-col items-center justify-center">
-          {/* Animated gradient background - CSS only, no shader */}
-          <div className="absolute inset-0 z-0 overflow-hidden">
-            {/* Primary glow */}
-            <motion.div
-              className="absolute -top-1/4 -left-1/4 w-3/4 h-3/4 rounded-full blur-[100px] opacity-30"
-              style={{ background: 'radial-gradient(circle, #0FE3C2 0%, transparent 70%)' }}
-              animate={{
-                x: [0, 50, 0],
-                y: [0, 30, 0],
-                scale: [1, 1.1, 1],
-              }}
-              transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-            />
-            {/* Secondary glow */}
-            <motion.div
-              className="absolute -bottom-1/4 -right-1/4 w-3/4 h-3/4 rounded-full blur-[100px] opacity-20"
-              style={{ background: 'radial-gradient(circle, #0FE3C2 0%, transparent 70%)' }}
-              animate={{
-                x: [0, -40, 0],
-                y: [0, -20, 0],
-                scale: [1.1, 1, 1.1],
-              }}
-              transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-            />
-            {/* Grid pattern */}
-            <div
-              className="absolute inset-0 opacity-[0.03]"
-              style={{
-                backgroundImage: `
-                  linear-gradient(rgba(15, 227, 194, 0.5) 1px, transparent 1px),
-                  linear-gradient(90deg, rgba(15, 227, 194, 0.5) 1px, transparent 1px)
-                `,
-                backgroundSize: '50px 50px',
-              }}
-            />
-          </div>
-
-          {/* Gradient overlays for depth */}
-          <div className="absolute inset-0 z-[1] bg-gradient-to-t from-bg-surface via-transparent to-bg-surface/50 pointer-events-none" />
-          <div className="absolute inset-0 z-[1] bg-gradient-to-b from-bg-surface/80 via-transparent to-transparent pointer-events-none" />
-
-          {/* Content */}
-          <div className="relative z-10 px-6 md:px-12 max-w-4xl mx-auto text-center flex flex-col items-center">
-            {/* Animated Badge */}
-            <div className="mb-8">
-              <AnimatedBadge
-                text="AI-Powered DevOps Automation"
-                color="#0FE3C2"
-                href="/chat"
-              />
-            </div>
-
-            {/* Headline */}
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-text-primary mb-6 leading-[1.08]"
-            >
-              Describe your task.
-              <br />
-              <span className="text-text-primary/70">We execute it safely.</span>
-            </motion.h1>
-
-            {/* Description */}
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-text-secondary text-lg md:text-xl max-w-2xl mb-10 leading-relaxed"
-            >
-              Transform natural language into reviewable, reversible action chains.
-              Every command previewed. Every action auditable.
-            </motion.p>
-
-            {/* CTA Button */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-            >
-              <Link
-                href="/chat"
-                className="group relative inline-flex h-14 items-center justify-center gap-3 overflow-hidden rounded-full bg-accent px-10 md:px-12 text-base font-semibold text-bg-primary transition-all duration-300 hover:bg-accent-hover hover:scale-105 active:scale-95 hover:shadow-[0_0_30px_rgba(15,227,194,0.4)]"
-              >
-                <span className="relative z-10">Start Automating</span>
-                <ArrowRight className="h-5 w-5 relative z-10 transition-transform duration-300 group-hover:translate-x-1" />
-              </Link>
-            </motion.div>
-
-            {/* Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="flex items-center justify-center gap-8 md:gap-16 mt-12 pt-8 border-t border-border-subtle/30"
-            >
-              {stats.map((stat) => (
-                <div key={stat.label} className="text-center">
-                  <div className="text-2xl md:text-3xl font-bold text-text-primary font-mono">
-                    {stat.value}
-                  </div>
-                  <div className="text-sm text-text-muted mt-1">{stat.label}</div>
-                </div>
-              ))}
-            </motion.div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 function FAQItem({ question, answer, index }: { question: string; answer: string; index: number }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -249,45 +126,21 @@ function FAQItem({ question, answer, index }: { question: string; answer: string
 }
 
 export default function Home() {
-  const {
-    executionId,
-    prompt,
-    status,
-    plan,
-    results,
-    error,
-    progress,
-    isLoading,
-    showConfirmDialog,
-    setPrompt,
-    submitPrompt,
-    confirm,
-    cancel,
-    reset,
-  } = useExecution();
-
   const { isConnected } = useWebSocket();
-  const logs = useLogs();
-  const { allTools } = useTools();
-  const router = useRouter();
   const { scrollYProgress } = useScroll();
   const headerBg = useTransform(scrollYProgress, [0, 0.05], ['rgba(11, 15, 18, 0)', 'rgba(11, 15, 18, 0.95)']);
 
-  const handleExecutionSelect = (executionId: string) => {
-    router.push(`/executions/${executionId}`);
-  };
-
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative overflow-x-hidden">
       {/* Ambient Background */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-bg-primary" />
         <div
-          className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full blur-[150px] opacity-[0.15]"
+          className="absolute top-0 left-1/4 w-[800px] h-[800px] rounded-full blur-[200px] opacity-[0.12]"
           style={{ background: 'radial-gradient(circle, #0FE3C2 0%, transparent 70%)' }}
         />
         <div
-          className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full blur-[120px] opacity-[0.1]"
+          className="absolute bottom-0 right-1/4 w-[600px] h-[600px] rounded-full blur-[150px] opacity-[0.08]"
           style={{ background: 'radial-gradient(circle, #0FE3C2 0%, transparent 70%)' }}
         />
       </div>
@@ -300,53 +153,252 @@ export default function Home() {
           className="border-b border-border-subtle/30 sticky top-0 z-40 backdrop-blur-xl"
         >
           <div className="container mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-                <Zap className="w-4 h-4 text-accent" />
-              </div>
-              <span className="text-xl font-semibold tracking-tight">
-                <span className="text-text-primary">Opsuna</span>
-                <span className="text-accent ml-0.5">.</span>
-              </span>
+            <Link href="/" className="hover:opacity-90 transition-opacity">
+              <Logo size="md" />
             </Link>
 
-            {/* Navigation */}
             <nav className="hidden md:flex items-center gap-1">
               {NAV_ITEMS.map((item) => (
-                <Link
+                <a
                   key={item.label}
                   href={item.href}
                   className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors rounded-lg hover:bg-bg-surface/50"
                 >
                   {item.label}
-                </Link>
+                </a>
               ))}
             </nav>
 
-            {/* Status Indicator */}
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-bg-surface/50 border border-border-subtle">
-                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-accent' : 'bg-text-muted'}`}>
-                  {isConnected && (
-                    <div className="w-2 h-2 rounded-full bg-accent animate-ping" />
-                  )}
-                </div>
+              <a
+                href="/docs"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-medium text-text-secondary hover:text-accent border border-border-subtle hover:border-accent/50 rounded-lg transition-all hover:bg-accent/5"
+              >
+                <BookOpen className="w-4 h-4" />
+                Docs
+              </a>
+
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-bg-surface/50 border border-border-subtle">
+                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-accent' : 'bg-text-muted'}`} />
                 <span className="text-xs font-medium text-text-muted">
-                  {isConnected ? 'Connected' : 'Offline'}
+                  {isConnected ? 'Live' : 'Offline'}
                 </span>
               </div>
+
+              <Link
+                href="/chat"
+                className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold bg-accent text-bg-primary rounded-lg hover:bg-accent-hover transition-all"
+              >
+                Try It
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
           </div>
         </motion.header>
 
-        {/* Hero Section with Dithering Effect */}
-        <HeroSection stats={STATS} />
-
-        {/* Features Strip */}
-        <section className="border-y border-border-subtle/50 bg-bg-surface/20 backdrop-blur-sm">
+        {/* Hero Section */}
+        <section className="py-20 md:py-32 relative">
           <div className="container mx-auto px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-border-subtle/50">
+            <div className="max-w-5xl mx-auto text-center">
+              {/* Badge */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="mb-8"
+              >
+                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-medium">
+                  <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                  Built with Tambo Generative UI SDK
+                </span>
+              </motion.div>
+
+              {/* Headline */}
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-text-primary mb-8 leading-[1.05]"
+              >
+                UI that responds to
+                <br />
+                <span className="bg-gradient-to-r from-accent via-cyan-400 to-teal-400 bg-clip-text text-transparent">
+                  what you say
+                </span>
+              </motion.h1>
+
+              {/* Description */}
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="text-text-secondary text-xl md:text-2xl max-w-3xl mx-auto mb-12 leading-relaxed"
+              >
+                Describe your task in natural language. The AI decides which components to render.
+                <span className="text-text-primary"> No more learning complex interfaces.</span>
+              </motion.p>
+
+              {/* CTAs */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="flex flex-col sm:flex-row items-center justify-center gap-4"
+              >
+                <Link
+                  href="/chat"
+                  className="group relative inline-flex h-14 w-full sm:w-auto items-center justify-center gap-3 overflow-hidden rounded-full bg-accent px-10 text-base font-semibold text-bg-primary transition-all duration-300 hover:bg-accent-hover hover:scale-105 active:scale-95 hover:shadow-[0_0_40px_rgba(15,227,194,0.35)]"
+                >
+                  <span>Start Chatting</span>
+                  <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
+                </Link>
+                <Link
+                  href="/docs"
+                  className="inline-flex h-14 w-full sm:w-auto items-center justify-center gap-2 rounded-full border border-border-subtle px-10 text-base font-medium text-text-primary hover:border-accent/50 hover:bg-accent/5 transition-all"
+                >
+                  <BookOpen className="h-5 w-5" />
+                  Read the Docs
+                </Link>
+              </motion.div>
+
+              {/* Demo Preview */}
+              <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+                className="mt-20 relative"
+              >
+                <div className="relative rounded-2xl border border-border-subtle bg-bg-surface/80 backdrop-blur-xl shadow-2xl overflow-hidden">
+                  {/* Window Controls */}
+                  <div className="flex items-center gap-2 px-4 py-3 border-b border-border-subtle bg-bg-elevated/50">
+                    <div className="w-3 h-3 rounded-full bg-red-500/60" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
+                    <div className="w-3 h-3 rounded-full bg-green-500/60" />
+                    <div className="ml-4 flex-1">
+                      <span className="text-xs text-text-muted font-mono">opsuna — generative ui</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-accent' : 'bg-text-muted'}`} />
+                      <span className="text-xs text-text-muted">{isConnected ? 'Connected' : 'Offline'}</span>
+                    </div>
+                  </div>
+
+                  {/* Chat Interface */}
+                  <div className="p-6 md:p-8 space-y-6">
+                    {/* User Message */}
+                    <div className="flex justify-end">
+                      <div className="max-w-md px-4 py-3 rounded-2xl rounded-br-md bg-accent/10 border border-accent/20">
+                        <p className="text-text-primary text-sm md:text-base">
+                          Deploy staging and show me the execution plan
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* AI Response with Generative UI */}
+                    <div className="flex justify-start">
+                      <div className="max-w-xl space-y-4">
+                        <div className="px-4 py-2">
+                          <p className="text-text-secondary text-sm">
+                            I'll create an execution plan for deploying staging.
+                          </p>
+                        </div>
+
+                        {/* Generated Component */}
+                        <div className="rounded-xl border border-accent/20 bg-bg-elevated/50 overflow-hidden">
+                          <div className="px-4 py-2 border-b border-border-subtle bg-accent/5">
+                            <span className="text-xs font-mono text-accent">ExecutionPlan</span>
+                            <span className="text-xs text-text-muted ml-2">· rendered by AI</span>
+                          </div>
+                          <div className="p-4 space-y-3 font-mono text-sm">
+                            <div className="flex items-center gap-3">
+                              <span className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center text-xs text-accent">1</span>
+                              <span className="text-text-primary">deploy_staging</span>
+                              <span className="ml-auto px-2 py-0.5 text-xs rounded-full bg-green-500/10 text-green-400 border border-green-500/20">LOW</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center text-xs text-accent">2</span>
+                              <span className="text-text-primary">run_health_check</span>
+                              <span className="ml-auto px-2 py-0.5 text-xs rounded-full bg-green-500/10 text-green-400 border border-green-500/20">LOW</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center text-xs text-accent">3</span>
+                              <span className="text-text-primary">notify_team</span>
+                              <span className="ml-auto px-2 py-0.5 text-xs rounded-full bg-green-500/10 text-green-400 border border-green-500/20">LOW</span>
+                            </div>
+                          </div>
+                          <div className="px-4 py-3 border-t border-border-subtle flex gap-3">
+                            <button className="px-4 py-1.5 text-sm font-medium bg-accent text-bg-primary rounded-lg">
+                              Confirm
+                            </button>
+                            <button className="px-4 py-1.5 text-sm font-medium text-text-secondary hover:text-text-primary rounded-lg border border-border-subtle">
+                              Modify
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Decorative elements */}
+                <div className="absolute -inset-4 -z-10 rounded-3xl bg-gradient-to-b from-accent/20 via-transparent to-transparent blur-2xl opacity-50" />
+              </motion.div>
+            </div>
+          </div>
+        </section>
+
+        {/* Powered by Tambo */}
+        <section className="border-y border-border-subtle/50 bg-bg-surface/30 backdrop-blur-sm py-12">
+          <div className="container mx-auto px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
+              <div className="text-center md:text-left">
+                <p className="text-text-muted text-sm mb-2">Powered by</p>
+                <p className="text-2xl font-bold text-text-primary">Tambo SDK</p>
+              </div>
+              <div className="h-px md:h-12 w-full md:w-px bg-border-subtle" />
+              <div className="grid grid-cols-3 gap-8 md:gap-12 text-center">
+                <div>
+                  <p className="text-3xl font-bold text-accent">AI</p>
+                  <p className="text-sm text-text-muted mt-1">Decides UI</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-accent">React</p>
+                  <p className="text-sm text-text-muted mt-1">Components</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-accent">NLP</p>
+                  <p className="text-sm text-text-muted mt-1">Powered</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section id="features" className="py-24 md:py-32">
+          <div className="container mx-auto px-6 lg:px-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-16"
+            >
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-medium mb-6">
+                Generative UI Features
+              </span>
+              <h2 className="text-4xl md:text-5xl font-bold text-text-primary mb-6">
+                The AI chooses the
+                <br />
+                <span className="text-accent">right component</span>
+              </h2>
+              <p className="text-xl text-text-secondary max-w-2xl mx-auto">
+                Users shouldn't have to learn your app. The UI should adapt to what they're trying to do.
+              </p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               {FEATURES.map((feature, i) => (
                 <motion.div
                   key={feature.title}
@@ -354,14 +406,14 @@ export default function Home() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1, duration: 0.5 }}
-                  className="group py-8 px-6 relative overflow-hidden"
+                  className={`group card p-8 hover:border-accent/30 transition-all duration-300 relative overflow-hidden`}
                 >
-                  <div className={`absolute inset-0 bg-gradient-to-b ${feature.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                  <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
                   <div className="relative">
-                    <h3 className="text-base font-semibold text-text-primary mb-2 group-hover:text-accent transition-colors">
+                    <h3 className="text-xl font-semibold text-text-primary mb-3 group-hover:text-accent transition-colors">
                       {feature.title}
                     </h3>
-                    <p className="text-sm text-text-muted leading-relaxed">
+                    <p className="text-text-secondary leading-relaxed">
                       {feature.description}
                     </p>
                   </div>
@@ -371,269 +423,303 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Main Content */}
-        <section className="container mx-auto px-6 lg:px-8 py-16 lg:py-20">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Main Panel */}
-            <div className="lg:col-span-8 space-y-6">
-              {/* Prompt Card */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="card p-6 lg:p-8"
-              >
-                <div className="mb-6">
-                  <h2 className="text-2xl font-semibold text-text-primary mb-2">
-                    What would you like to do?
-                  </h2>
-                  <p className="text-base text-text-secondary">
-                    Describe your task in plain English. Be specific or broad—Opsuna adapts.
-                  </p>
-                </div>
+        {/* How It Works Section */}
+        <section id="how-it-works" className="py-24 md:py-32 bg-bg-surface/30">
+          <div className="container mx-auto px-6 lg:px-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-16"
+            >
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-medium mb-6">
+                How Tambo Works
+              </span>
+              <h2 className="text-4xl md:text-5xl font-bold text-text-primary mb-6">
+                From natural language
+                <br />
+                <span className="text-accent">to rendered components</span>
+              </h2>
+            </motion.div>
 
-                <AgentSelector />
-
-                <div className="mt-4">
-                  <PromptInput
-                    value={prompt}
-                    onChange={setPrompt}
-                    onSubmit={submitPrompt}
-                    isLoading={isLoading}
-                    disabled={status === 'executing'}
-                  />
-                </div>
-
-                {/* Quick Examples */}
-                <div className="mt-6 pt-6 border-t border-border-subtle">
-                  <p className="text-sm text-text-muted mb-3">Try these examples:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      'Deploy staging and run smoke tests',
-                      'Create a PR for the current branch',
-                      'Notify the team about the release',
-                    ].map((example) => (
-                      <button
-                        key={example}
-                        onClick={() => setPrompt(example)}
-                        className="text-sm px-3 py-1.5 rounded-lg bg-bg-elevated border border-border-subtle text-text-secondary hover:text-text-primary hover:border-accent/30 transition-all"
-                      >
-                        {example}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-
-              <ExecutionPanel
-                executionId={executionId}
-                status={status}
-                plan={plan}
-                results={results}
-                logs={logs}
-                error={error}
-                progress={progress}
-                showConfirmDialog={showConfirmDialog}
-                isLoading={isLoading}
-                onConfirm={confirm}
-                onCancel={cancel}
-                onCloseConfirmDialog={() => {}}
-                onReset={reset}
-              />
-            </div>
-
-            {/* Sidebar */}
-            <div className="lg:col-span-4 space-y-6">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
-                <HistoryList onSelect={handleExecutionSelect} />
-              </motion.div>
-
-              {/* Tools Preview */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="card p-6"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-text-primary">
-                    Connected Tools
-                  </h3>
-                  <Link
-                    href="/tools"
-                    className="text-sm text-accent hover:text-accent-hover transition-colors flex items-center gap-1 group"
+            <div className="max-w-4xl mx-auto">
+              <div className="grid md:grid-cols-3 gap-8">
+                {[
+                  {
+                    step: '01',
+                    title: 'Register Components',
+                    description: 'Define your React components and register them with Tambo. Add descriptions so the AI knows when to use each one.',
+                  },
+                  {
+                    step: '02',
+                    title: 'User Describes Intent',
+                    description: 'Users describe what they want in natural language. No need to navigate menus or learn the interface.',
+                  },
+                  {
+                    step: '03',
+                    title: 'AI Renders UI',
+                    description: 'Tambo analyzes the intent and dynamically renders the appropriate components with the right data.',
+                  },
+                ].map((item, index) => (
+                  <motion.div
+                    key={item.step}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.15, duration: 0.5 }}
+                    className="relative"
                   >
-                    View all
-                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
-                </div>
-                <div className="space-y-2">
-                  {(allTools.length > 0 ? allTools.slice(0, 5) : [
-                    { name: 'deploy_staging', source: 'local' },
-                    { name: 'run_smoke_tests', source: 'local' },
-                    { name: 'create_github_pr', source: 'local' },
-                    { name: 'post_slack_message', source: 'local' },
-                  ]).map((tool) => (
-                    <div
-                      key={tool.name}
-                      className="px-3 py-2.5 rounded-lg bg-bg-elevated/50 border border-border-subtle hover:border-accent/30 transition-all flex items-center justify-between group"
-                    >
-                      <span className="font-mono text-sm text-text-secondary group-hover:text-text-primary transition-colors">
-                        {tool.name}
-                      </span>
-                      <Badge
-                        variant={tool.source === 'composio' ? 'default' : 'secondary'}
-                        size="sm"
-                      >
-                        {tool.source}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
+                    {index < 2 && (
+                      <div className="hidden md:block absolute top-8 left-1/2 w-full h-px bg-gradient-to-r from-accent/50 to-transparent" />
+                    )}
 
-              {/* How It Works */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="card p-6"
-              >
-                <h3 className="text-lg font-semibold text-text-primary mb-5">
-                  How it works
-                </h3>
-                <div className="space-y-4">
-                  {[
-                    { step: '01', text: 'Describe your task in natural language', icon: Terminal },
-                    { step: '02', text: 'Review the generated execution plan', icon: GitBranch },
-                    { step: '03', text: 'Confirm to execute with full control', icon: Shield },
-                    { step: '04', text: 'Monitor progress with real-time logs', icon: MessageSquare },
-                  ].map((item, i) => (
-                    <div key={item.step} className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center">
-                        <item.icon className="w-4 h-4 text-accent" />
+                    <div className="card p-8 relative z-10">
+                      <div className="flex items-center gap-4 mb-6">
+                        <span className="text-5xl font-bold text-accent/20">{item.step}</span>
                       </div>
-                      <div className="pt-1">
-                        <span className="text-sm text-text-secondary">{item.text}</span>
-                      </div>
+                      <h3 className="text-xl font-semibold text-text-primary mb-3">
+                        {item.title}
+                      </h3>
+                      <p className="text-text-secondary leading-relaxed">
+                        {item.description}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              </motion.div>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Trust Section */}
-        <section className="container mx-auto px-6 lg:px-8 py-16 lg:py-24">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="max-w-4xl mx-auto"
-          >
-            <div className="text-center mb-14">
-              <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
-                Built for teams who <span className="text-accent">ship with confidence</span>
+        {/* Components Showcase */}
+        <section id="components" className="py-24 md:py-32">
+          <div className="container mx-auto px-6 lg:px-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-16"
+            >
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-medium mb-6">
+                Registered Components
+              </span>
+              <h2 className="text-4xl md:text-5xl font-bold text-text-primary mb-6">
+                Components that render
+                <br />
+                <span className="text-accent">on demand</span>
               </h2>
-              <p className="text-lg text-text-secondary max-w-2xl mx-auto">
-                Every action is auditable. Every change is reversible. Every deployment is stress-free.
+              <p className="text-xl text-text-secondary max-w-2xl mx-auto">
+                Each component is registered with Tambo. The AI decides when to render them based on the conversation.
               </p>
-            </div>
+            </motion.div>
 
-            <div className="grid md:grid-cols-3 gap-6">
-              {[
-                {
-                  icon: Clock,
-                  title: 'Full Audit Trail',
-                  description: 'Complete execution logs with timestamps, user attribution, and outcome tracking.',
-                },
-                {
-                  icon: RotateCcw,
-                  title: 'Instant Rollbacks',
-                  description: 'One-click rollback to any previous state. No manual cleanup required.',
-                },
-                {
-                  icon: Shield,
-                  title: 'Production Safe',
-                  description: 'High-risk actions need typed confirmation. Intent tokens expire in 5 minutes.',
-                },
-              ].map((item, i) => (
+            <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+              {COMPONENTS.map((component, i) => (
                 <motion.div
-                  key={item.title}
+                  key={component.name}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1, duration: 0.5 }}
-                  className="card p-6 hover:border-accent/20 transition-colors group"
+                  className="group card p-6 hover:border-accent/30 transition-all duration-300"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
-                    <item.icon className="w-5 h-5 text-accent" />
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center flex-shrink-0 font-mono text-accent text-lg font-bold">
+                      {'</>'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-text-primary mb-1 font-mono group-hover:text-accent transition-colors">
+                        {component.name}
+                      </h3>
+                      <p className="text-text-secondary text-sm mb-3">
+                        {component.description}
+                      </p>
+                      <div className="px-3 py-2 rounded-lg bg-bg-elevated border border-border-subtle">
+                        <p className="text-xs text-text-muted mb-1">Triggered by:</p>
+                        <p className="text-sm text-text-primary font-medium italic">
+                          {component.trigger}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="text-lg font-semibold text-text-primary mb-2">{item.title}</h3>
-                  <p className="text-sm text-text-secondary leading-relaxed">{item.description}</p>
                 </motion.div>
               ))}
             </div>
-          </motion.div>
+          </div>
+        </section>
+
+        {/* Code Example */}
+        <section className="py-24 md:py-32 bg-bg-surface/30">
+          <div className="container mx-auto px-6 lg:px-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="max-w-4xl mx-auto"
+            >
+              <div className="text-center mb-12">
+                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-medium mb-6">
+                  Simple Integration
+                </span>
+                <h2 className="text-4xl md:text-5xl font-bold text-text-primary mb-6">
+                  Register components
+                  <br />
+                  <span className="text-accent">in minutes</span>
+                </h2>
+              </div>
+
+              <div className="card p-0 overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-3 border-b border-border-subtle bg-bg-elevated/50">
+                  <div className="w-3 h-3 rounded-full bg-red-500/50" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
+                  <div className="w-3 h-3 rounded-full bg-green-500/50" />
+                  <span className="ml-2 text-xs text-text-muted font-mono">tambo-setup.tsx</span>
+                </div>
+                <pre className="p-6 overflow-x-auto text-sm">
+                  <code className="text-text-secondary font-mono">
+{`import { TamboProvider, registerComponent } from '@tambo/react';
+
+// Register your component with Tambo
+registerComponent({
+  name: 'ExecutionPlan',
+  component: ExecutionPlanCard,
+  description: 'Shows step-by-step execution plans with risk levels',
+  triggers: ['deploy', 'execute', 'run workflow', 'show plan']
+});
+
+// Wrap your app with TamboProvider
+function App() {
+  return (
+    <TamboProvider>
+      <ChatInterface />
+    </TamboProvider>
+  );
+}
+
+// The AI now knows when to render ExecutionPlan!`}
+                  </code>
+                </pre>
+              </div>
+            </motion.div>
+          </div>
         </section>
 
         {/* FAQ Section */}
-        <section className="container mx-auto px-6 lg:px-8 py-16 lg:py-24">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="max-w-3xl mx-auto"
-          >
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-3">
-                Frequently Asked Questions
-              </h2>
-              <p className="text-lg text-text-secondary">
-                Everything you need to know about Opsuna.
-              </p>
-            </div>
-            <div className="card p-6 lg:p-8">
-              {FAQ_ITEMS.map((item, index) => (
-                <FAQItem key={item.question} {...item} index={index} />
-              ))}
-            </div>
-          </motion.div>
+        <section id="faq" className="py-24 md:py-32">
+          <div className="container mx-auto px-6 lg:px-8">
+            <motion.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              className="max-w-3xl mx-auto"
+            >
+              <div className="text-center mb-12">
+                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-medium mb-6">
+                  FAQ
+                </span>
+                <h2 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
+                  Frequently Asked Questions
+                </h2>
+                <p className="text-lg text-text-secondary">
+                  Everything you need to know about Generative UI.
+                </p>
+              </div>
+              <div className="card p-6 lg:p-8">
+                {FAQ_ITEMS.map((item, index) => (
+                  <FAQItem key={item.question} {...item} index={index} />
+                ))}
+              </div>
+            </motion.div>
+          </div>
         </section>
 
-        {/* CTA Section with Dithering Effect */}
-        <CTASection />
+        {/* Final CTA Section */}
+        <section className="py-24 md:py-32">
+          <div className="container mx-auto px-6 lg:px-8">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="relative rounded-3xl border border-border-subtle bg-bg-surface overflow-hidden"
+            >
+              {/* Background Effects */}
+              <div className="absolute inset-0 -z-10">
+                <div
+                  className="absolute top-0 left-1/4 w-96 h-96 rounded-full blur-[120px] opacity-20"
+                  style={{ background: 'radial-gradient(circle, #0FE3C2 0%, transparent 70%)' }}
+                />
+                <div
+                  className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full blur-[120px] opacity-15"
+                  style={{ background: 'radial-gradient(circle, #0FE3C2 0%, transparent 70%)' }}
+                />
+              </div>
+
+              <div className="relative z-10 px-8 py-16 md:px-16 md:py-24 text-center">
+                <h2 className="text-4xl md:text-5xl font-bold text-text-primary mb-6">
+                  Experience Generative UI
+                </h2>
+                <p className="text-xl text-text-secondary max-w-xl mx-auto mb-10">
+                  See how the AI dynamically renders components based on what you say.
+                  <br />
+                  Built with Tambo for the Generative UI Hackathon.
+                </p>
+
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <Link
+                    href="/chat"
+                    className="group relative inline-flex h-14 w-full sm:w-auto items-center justify-center gap-3 overflow-hidden rounded-full bg-accent px-10 text-base font-semibold text-bg-primary transition-all duration-300 hover:bg-accent-hover hover:scale-105 active:scale-95 hover:shadow-[0_0_40px_rgba(15,227,194,0.35)]"
+                  >
+                    <span>Try the Chat Interface</span>
+                    <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
+                  </Link>
+                  <Link
+                    href="/builder"
+                    className="inline-flex h-14 w-full sm:w-auto items-center justify-center gap-2 rounded-full border border-border-subtle px-10 text-base font-medium text-text-primary hover:border-accent/50 hover:bg-accent/5 transition-all"
+                  >
+                    Explore UI Builder
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
 
         {/* Footer */}
-        <footer className="border-t border-border-subtle/50 py-10">
+        <footer className="border-t border-border-subtle/50 py-12">
           <div className="container mx-auto px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded bg-accent/10 border border-accent/20 flex items-center justify-center">
-                  <Zap className="w-3 h-3 text-accent" />
-                </div>
-                <span className="text-lg font-semibold">
-                  <span className="text-text-primary">Opsuna</span>
-                  <span className="text-accent">.</span>
-                </span>
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <Logo size="sm" />
+
+              <div className="flex items-center gap-6 text-sm text-text-muted">
+                <Link href="/chat" className="hover:text-text-primary transition-colors">
+                  Chat
+                </Link>
+                <Link href="/builder" className="hover:text-text-primary transition-colors">
+                  Builder
+                </Link>
+                <Link href="/agents" className="hover:text-text-primary transition-colors">
+                  Agents
+                </Link>
+                <Link href="/tools" className="hover:text-text-primary transition-colors">
+                  Tools
+                </Link>
+                <Link href="/docs" className="hover:text-text-primary transition-colors">
+                  Docs
+                </Link>
               </div>
-              <p className="text-sm text-text-muted">
-                Safe action orchestration for modern development teams
-              </p>
-              <p className="text-xs text-text-muted font-mono">
-                v0.1.0 · Built with Tambo
-              </p>
+
+              <div className="text-center md:text-right">
+                <p className="text-xs text-text-muted font-mono">
+                  Built for The UI Strikes Back Hackathon
+                </p>
+                <p className="text-xs text-accent mt-1">
+                  Powered by Tambo Generative UI SDK
+                </p>
+              </div>
             </div>
           </div>
         </footer>
 
-        {/* Toast Notifications */}
         <ToastContainer />
       </div>
     </div>

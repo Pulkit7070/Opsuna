@@ -7,7 +7,6 @@ import {
   Sparkles,
   Send,
   Loader2,
-  Wand2,
   LayoutDashboard,
   LogIn,
   BarChart3,
@@ -25,11 +24,22 @@ import {
   LineChart,
   Shield,
   Workflow,
+  AlertTriangle,
 } from 'lucide-react';
+import { LogoIcon } from '@/components/Logo';
 import { useAgents, Agent } from '@/hooks/useAgents';
+
+type DeviceMode = 'desktop' | 'tablet' | 'mobile';
+
+const DEVICE_SIZES = {
+  desktop: { width: '100%', label: 'Desktop' },
+  tablet: { width: '768px', label: 'Tablet' },
+  mobile: { width: '375px', label: 'Mobile' },
+};
 
 interface TamboBuilderProps {
   onClose?: () => void;
+  deviceMode?: DeviceMode;
 }
 
 // Agent-specific quick prompts configuration
@@ -88,15 +98,16 @@ function getAgentColor(name: string): string {
     'Data Analyst': 'from-emerald-500 to-teal-500',
     'DevOps Engineer': 'from-orange-500 to-red-500',
   };
-  return colorMap[name] || 'from-violet-500 to-fuchsia-500';
+  return colorMap[name] || 'from-cyan-500 to-teal-500';
 }
 
-export function TamboBuilder({ onClose }: TamboBuilderProps) {
+export function TamboBuilder({ onClose, deviceMode = 'desktop' }: TamboBuilderProps) {
   const { thread } = useTamboThread();
   const { value, setValue, submit, isPending } = useTamboThreadInput();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [showAgentDropdown, setShowAgentDropdown] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Store the last generated component to prevent it from disappearing
@@ -129,16 +140,31 @@ export function TamboBuilder({ onClose }: TamboBuilderProps) {
     }
   }, [thread?.messages]);
 
+  const safeSubmit = async () => {
+    setApiError(null);
+    try {
+      await submit();
+    } catch (err) {
+      console.error('[TamboBuilder] Submit error:', err);
+      setApiError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to generate UI. Please check your Tambo API key or try again.'
+      );
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (value.trim() && !isPending) {
-      submit();
+      safeSubmit();
     }
   };
 
   const handleQuickPrompt = (prompt: string) => {
     setValue(prompt);
-    setTimeout(() => submit(), 100);
+    setApiError(null);
+    setTimeout(() => safeSubmit(), 100);
   };
 
   const handleAgentSelect = (agent: Agent | null) => {
@@ -151,18 +177,18 @@ export function TamboBuilder({ onClose }: TamboBuilderProps) {
   const generatedComponent = lastMessage?.renderedComponent || lastGeneratedUI;
 
   const AgentIcon = selectedAgent ? getAgentIcon(selectedAgent.name) : Bot;
-  const agentGradient = selectedAgent ? getAgentColor(selectedAgent.name) : 'from-violet-500 to-fuchsia-500';
+  const agentGradient = selectedAgent ? getAgentColor(selectedAgent.name) : 'from-cyan-500 to-teal-500';
 
   return (
     <div className={`flex flex-col bg-zinc-950 ${isFullscreen ? 'fixed inset-0 z-50' : 'h-full w-full'}`}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 shrink-0">
         <div className="flex items-center gap-3">
-          <div className={`w-8 h-8 bg-gradient-to-br ${agentGradient} rounded-lg flex items-center justify-center`}>
-            <Wand2 className="w-4 h-4 text-white" />
-          </div>
+          <LogoIcon size="sm" />
           <div>
-            <h2 className="text-sm font-semibold text-white">Tambo AI Builder</h2>
+            <h2 className="text-sm font-semibold text-white">
+              Tambo <span className="text-zinc-400 font-normal">AI Builder</span>
+            </h2>
             <p className="text-xs text-zinc-500">
               {selectedAgent ? `${selectedAgent.name} Mode` : 'Describe your UI, get it instantly'}
             </p>
@@ -192,7 +218,7 @@ export function TamboBuilder({ onClose }: TamboBuilderProps) {
                   <button
                     onClick={() => handleAgentSelect(null)}
                     className={`w-full flex items-center gap-2 px-3 py-2.5 hover:bg-zinc-700 transition-colors text-left ${
-                      !selectedAgent ? 'bg-violet-500/20 text-violet-300' : 'text-zinc-300'
+                      !selectedAgent ? 'bg-cyan-500/20 text-cyan-300' : 'text-zinc-300'
                     }`}
                   >
                     <Sparkles size={14} />
@@ -212,7 +238,7 @@ export function TamboBuilder({ onClose }: TamboBuilderProps) {
                           key={agent.id}
                           onClick={() => handleAgentSelect(agent)}
                           className={`w-full flex items-center gap-2 px-3 py-2.5 hover:bg-zinc-700 transition-colors text-left ${
-                            isSelected ? 'bg-violet-500/20 text-violet-300' : 'text-zinc-300'
+                            isSelected ? 'bg-cyan-500/20 text-cyan-300' : 'text-zinc-300'
                           }`}
                         >
                           <Icon size={14} />
@@ -268,14 +294,38 @@ export function TamboBuilder({ onClose }: TamboBuilderProps) {
                   key={item.label}
                   onClick={() => handleQuickPrompt(item.prompt)}
                   disabled={isPending}
-                  className="w-full flex items-center gap-2 px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-violet-500/50 rounded-lg transition-all text-left disabled:opacity-50 group"
+                  className="w-full flex items-center gap-2 px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-cyan-500/50 rounded-lg transition-all text-left disabled:opacity-50 group"
                 >
-                  <item.icon size={14} className="text-violet-400 group-hover:text-violet-300" />
+                  <item.icon size={14} className="text-cyan-400 group-hover:text-cyan-300" />
                   <span className="text-sm text-zinc-300 group-hover:text-white">{item.label}</span>
                 </button>
               ))}
             </div>
           </div>
+
+          {/* API Error Banner */}
+          {apiError && (
+            <div className="mx-4 mt-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <div className="flex items-start gap-3">
+                <AlertTriangle size={16} className="text-red-400 mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-red-400 font-medium">Tambo API Error</p>
+                  <p className="text-xs text-red-300/80 mt-0.5 break-words">{apiError}</p>
+                  <p className="text-xs text-zinc-500 mt-1.5">
+                    Verify your API key at{' '}
+                    <a href="https://tambo.co" target="_blank" rel="noopener" className="underline hover:text-zinc-400">tambo.co</a>
+                    {' '}or try switching to "Code Gen" mode.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setApiError(null)}
+                  className="text-red-400/60 hover:text-red-400 text-xs shrink-0"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Chat History */}
           <div className="flex-1 overflow-auto p-4 space-y-3">
@@ -322,7 +372,7 @@ export function TamboBuilder({ onClose }: TamboBuilderProps) {
                   : 'Describe the UI you want...'
                 }
                 disabled={isPending}
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl pl-4 pr-12 py-3 text-sm focus:outline-none focus:border-violet-500 text-white placeholder-zinc-500 disabled:opacity-50"
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl pl-4 pr-12 py-3 text-sm focus:outline-none focus:border-cyan-500 text-white placeholder-zinc-500 disabled:opacity-50"
               />
               <button
                 type="submit"
@@ -340,19 +390,28 @@ export function TamboBuilder({ onClose }: TamboBuilderProps) {
         </div>
 
         {/* Preview Panel */}
-        <div className="flex-1 overflow-auto bg-zinc-900/50">
-          <AnimatePresence mode="wait">
-            {generatedComponent ? (
-              <motion.div
-                key="preview"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="h-full"
-              >
-                {generatedComponent}
-              </motion.div>
-            ) : (
+        <div className="flex-1 overflow-auto bg-zinc-900/50 flex items-start justify-center p-4">
+          <div
+            className={`h-full bg-zinc-950 overflow-auto transition-all duration-300 ${
+              deviceMode !== 'desktop' ? 'border-8 border-zinc-700 rounded-[24px] shadow-2xl' : ''
+            }`}
+            style={{
+              width: DEVICE_SIZES[deviceMode].width,
+              maxWidth: '100%',
+            }}
+          >
+            <AnimatePresence mode="wait">
+              {generatedComponent ? (
+                <motion.div
+                  key="preview"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="h-full"
+                >
+                  {generatedComponent}
+                </motion.div>
+              ) : (
               <motion.div
                 key="empty"
                 initial={{ opacity: 0 }}
@@ -365,7 +424,7 @@ export function TamboBuilder({ onClose }: TamboBuilderProps) {
                     {selectedAgent ? (
                       <AgentIcon className="text-white opacity-100" size={32} />
                     ) : (
-                      <Sparkles className="text-violet-400" size={32} />
+                      <Sparkles className="text-cyan-400" size={32} />
                     )}
                   </div>
                   <h3 className="text-xl font-semibold text-white mb-2">
@@ -391,7 +450,8 @@ export function TamboBuilder({ onClose }: TamboBuilderProps) {
                 </div>
               </motion.div>
             )}
-          </AnimatePresence>
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </div>
