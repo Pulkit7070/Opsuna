@@ -7,6 +7,7 @@ import { ExecutionPlan, ToolCallResult, ExecutionStatus } from '@opsuna/shared';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { DataChart } from '@/components/tambo/DataChart';
+import { QuickActions, ActionType } from '@/components/QuickActions';
 import dynamic from 'next/dynamic';
 
 // Dynamically import MermaidDiagram to avoid SSR issues
@@ -222,6 +223,13 @@ function ResultsSummary({ results }: { results: ToolCallResult[] }) {
   const chartResults = visualizations.filter((v): v is ChartVisualization => v.type === 'chart');
   const diagramResults = visualizations.filter((v): v is DiagramVisualization => v.type === 'diagram');
 
+  // Handler for quick actions - logs action for demo purposes
+  // In production, this would trigger actual API calls to Slack, Jira, etc.
+  const handleQuickAction = (type: ActionType, payload?: Record<string, unknown>) => {
+    console.log(`[QuickAction] ${type}:`, payload);
+    // The QuickActions component handles its own UI feedback (success animations)
+  };
+
   return (
     <div className="mt-3 p-3 bg-bg-primary rounded-lg border border-border-subtle">
       <div className="flex items-center gap-4 mb-2">
@@ -280,6 +288,15 @@ function ResultsSummary({ results }: { results: ToolCallResult[] }) {
                 diagram={diagram.props.diagram}
                 diagramType={diagram.props.diagramType}
               />
+              {/* Quick Actions for diagrams */}
+              <QuickActions
+                context="diagram"
+                data={{
+                  title: diagram.props.title,
+                  content: `Architecture diagram: ${diagram.props.title}`,
+                }}
+                onAction={handleQuickAction}
+              />
             </motion.div>
           ))}
         </div>
@@ -308,9 +325,34 @@ function ResultsSummary({ results }: { results: ToolCallResult[] }) {
                 xAxisLabel={chart.props.xAxisLabel}
                 yAxisLabel={chart.props.yAxisLabel}
               />
+              {/* Quick Actions for charts */}
+              <QuickActions
+                context="chart"
+                data={{
+                  title: chart.props.title,
+                  content: `Data visualization: ${chart.props.title}`,
+                  chartData: chart.props.data,
+                }}
+                onAction={handleQuickAction}
+              />
             </motion.div>
           ))}
         </div>
+      )}
+
+      {/* Quick Actions for test/deployment results (when no visualizations) */}
+      {diagramResults.length === 0 && chartResults.length === 0 && successCount > 0 && (
+        <QuickActions
+          context={
+            results.some(r => r.toolName?.includes('test')) ? 'test' :
+            results.some(r => r.toolName?.includes('deploy')) ? 'deployment' : 'default'
+          }
+          data={{
+            title: 'Execution Results',
+            content: `${successCount} successful, ${failedCount} failed`,
+          }}
+          onAction={handleQuickAction}
+        />
       )}
     </div>
   );
