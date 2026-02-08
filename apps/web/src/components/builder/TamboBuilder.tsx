@@ -25,6 +25,9 @@ import {
   Shield,
   Workflow,
   AlertTriangle,
+  Quote,
+  Grid3X3,
+  Mail,
 } from 'lucide-react';
 import { LogoIcon } from '@/components/Logo';
 import { useAgents, Agent } from '@/hooks/useAgents';
@@ -51,6 +54,9 @@ const agentPrompts: Record<string, Array<{ icon: React.ElementType; label: strin
     { icon: BarChart3, label: 'Data Table', prompt: 'Create a data table with name, email, role, and status columns' },
     { icon: CreditCard, label: 'Pricing Cards', prompt: 'Create pricing cards for Basic, Pro, and Enterprise plans' },
     { icon: Globe, label: 'Hero Section', prompt: 'Create a hero section for a product launch page' },
+    { icon: Quote, label: 'Testimonials', prompt: 'Create testimonials section with 3 customer reviews and 5-star ratings' },
+    { icon: Grid3X3, label: 'Features Grid', prompt: 'Create a features grid with 4 features: Speed, Security, AI-Powered, and Global' },
+    { icon: Mail, label: 'Contact Form', prompt: 'Create a contact form with name, email, and message fields' },
   ],
 
   // Deep Research Agent

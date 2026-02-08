@@ -4,6 +4,9 @@ import { StatsCards } from '@/components/builder/blocks/StatsCards';
 import { DataTable } from '@/components/builder/blocks/DataTable';
 import { PricingCards } from '@/components/builder/blocks/PricingCards';
 import { Hero } from '@/components/builder/blocks/Hero';
+import { Testimonials } from '@/components/builder/blocks/Testimonials';
+import { FeaturesGrid } from '@/components/builder/blocks/FeaturesGrid';
+import { ContactForm } from '@/components/builder/blocks/ContactForm';
 
 // Color schema used across components
 const accentColorSchema = z.enum(['violet', 'blue', 'emerald', 'rose', 'orange']).optional();
@@ -101,6 +104,51 @@ export const tamboComponents = [
       primaryButtonText: z.string().describe('Primary CTA button text').optional(),
       secondaryButtonText: z.string().describe('Secondary button text').optional(),
       features: z.array(z.string()).describe('Short feature highlights shown with checkmarks').optional(),
+      accentColor: z.enum(['violet', 'blue', 'emerald', 'rose']).describe('Accent color').optional(),
+    }),
+  },
+  {
+    name: 'Testimonials',
+    description: 'Customer testimonials section with quotes, ratings, and author info. Great for social proof, reviews, and customer feedback display.',
+    component: Testimonials,
+    propsSchema: z.object({
+      title: z.string().describe('Section heading like "What Our Users Say"').optional(),
+      subtitle: z.string().describe('Section subheading').optional(),
+      testimonials: z.array(z.object({
+        name: z.string().describe('Customer name'),
+        role: z.string().describe('Customer role or title'),
+        company: z.string().describe('Company name').optional(),
+        content: z.string().describe('The testimonial quote'),
+        rating: z.number().min(1).max(5).describe('Star rating 1-5').optional(),
+      })).describe('Array of testimonials'),
+      accentColor: z.enum(['violet', 'blue', 'emerald', 'rose']).describe('Accent color').optional(),
+    }),
+  },
+  {
+    name: 'FeaturesGrid',
+    description: 'A grid of feature cards with icons, titles, and descriptions. Perfect for showcasing product features, benefits, or capabilities.',
+    component: FeaturesGrid,
+    propsSchema: z.object({
+      title: z.string().describe('Section heading like "Powerful Features"').optional(),
+      subtitle: z.string().describe('Section description').optional(),
+      features: z.array(z.object({
+        title: z.string().describe('Feature name'),
+        description: z.string().describe('Feature description'),
+        icon: z.enum(['zap', 'shield', 'sparkles', 'globe', 'cpu', 'lock', 'rocket', 'heart']).describe('Icon name').optional(),
+      })).describe('Array of features'),
+      columns: z.enum(['2', '3', '4']).transform(v => parseInt(v) as 2 | 3 | 4).describe('Number of columns').optional(),
+      accentColor: z.enum(['violet', 'blue', 'emerald', 'rose']).describe('Accent color').optional(),
+    }),
+  },
+  {
+    name: 'ContactForm',
+    description: 'A contact or inquiry form with customizable fields. Use for contact pages, feedback forms, or lead capture.',
+    component: ContactForm,
+    propsSchema: z.object({
+      title: z.string().describe('Form heading like "Get in Touch"').optional(),
+      subtitle: z.string().describe('Form description').optional(),
+      fields: z.array(z.enum(['name', 'email', 'subject', 'message'])).describe('Which fields to show').optional(),
+      buttonText: z.string().describe('Submit button text').optional(),
       accentColor: z.enum(['violet', 'blue', 'emerald', 'rose']).describe('Accent color').optional(),
     }),
   },
