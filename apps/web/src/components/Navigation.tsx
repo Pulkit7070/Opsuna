@@ -10,7 +10,6 @@ import {
   MessageSquare,
   Bot,
   Wrench,
-  Sparkles,
   Menu,
   X,
 } from 'lucide-react';
@@ -22,7 +21,6 @@ const NAV_ITEMS = [
   { label: 'Chat', href: '/chat', icon: MessageSquare },
   { label: 'Agents', href: '/agents', icon: Bot },
   { label: 'Tools', href: '/tools', icon: Wrench },
-  { label: 'Tambo AI', href: '/tambo', icon: Sparkles },
 ];
 
 export function Navigation() {
