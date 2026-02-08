@@ -22,6 +22,9 @@ import {
 
 const app = express();
 
+// Trust proxy (required for Railway/Vercel - they use reverse proxies)
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 app.use(corsMiddleware);
