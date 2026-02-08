@@ -1,26 +1,32 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Code2,
   Eye,
   Download,
-  Github,
   Save,
-  FolderOpen,
   Sparkles,
   PanelLeftClose,
   PanelLeft,
   Copy,
   Check,
-  Play,
   RefreshCw,
-  Layers,
   FileCode,
-  Settings,
-  Share2
+  Maximize2,
+  Minimize2,
+  Monitor,
+  Tablet,
+  Smartphone,
+  GripVertical,
+  X,
+  Home,
+  MessageSquare,
+  Bot,
+  Wrench
 } from 'lucide-react';
+import Link from 'next/link';
 import { BuilderChat } from '@/components/builder/BuilderChat';
 import { CodePreview } from '@/components/builder/CodePreview';
 import { CodeEditor } from '@/components/builder/CodeEditor';
@@ -28,16 +34,33 @@ import { FileTree } from '@/components/builder/FileTree';
 import { ExportModal } from '@/components/builder/ExportModal';
 import { ProjectSidebar } from '@/components/builder/ProjectSidebar';
 import { ComponentPalette } from '@/components/builder/ComponentPalette';
+import { TamboBuilder } from '@/components/builder/TamboBuilder';
 import { useBuilderStore } from '@/store/builder';
 
-type ViewMode = 'preview' | 'code' | 'split';
+type DeviceMode = 'desktop' | 'tablet' | 'mobile';
+type RightTab = 'preview' | 'code';
+type BuilderMode = 'code' | 'tambo';
+
+const DEVICE_SIZES = {
+  desktop: { width: '100%', label: 'Desktop' },
+  tablet: { width: '768px', label: 'Tablet' },
+  mobile: { width: '375px', label: 'Mobile' },
+};
 
 export default function BuilderPage() {
-  const [viewMode, setViewMode] = useState<ViewMode>('split');
   const [showSidebar, setShowSidebar] = useState(true);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [deviceMode, setDeviceMode] = useState<DeviceMode>('desktop');
+  const [rightTab, setRightTab] = useState<RightTab>('preview');
+  const [builderMode, setBuilderMode] = useState<BuilderMode>('tambo'); // Default to Tambo mode
+
+  // Resizable chat panel
+  const [chatWidth, setChatWidth] = useState(380);
+  const [isResizing, setIsResizing] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const {
     currentProject,
@@ -46,6 +69,43 @@ export default function BuilderPage() {
     isGenerating,
     previewKey
   } = useBuilderStore();
+
+  // Handle panel resize
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing || !containerRef.current) return;
+
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const sidebarWidth = showSidebar ? 260 : 0;
+      const newWidth = e.clientX - containerRect.left - sidebarWidth;
+
+      // Clamp between 300 and 600
+      setChatWidth(Math.max(300, Math.min(600, newWidth)));
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizing, showSidebar]);
 
   const handleCopyCode = useCallback(() => {
     if (activeFile && files[activeFile]) {
@@ -59,167 +119,329 @@ export default function BuilderPage() {
     useBuilderStore.getState().refreshPreview();
   }, []);
 
+  const toggleFullscreen = useCallback(() => {
+    setIsFullscreen(!isFullscreen);
+  }, [isFullscreen]);
+
   return (
-    <div className="h-screen flex flex-col bg-zinc-950 text-white overflow-hidden">
+    <div ref={containerRef} className="h-screen flex flex-col bg-zinc-950 text-white overflow-hidden">
       {/* Top Navigation Bar */}
-      <header className="h-14 border-b border-zinc-800 flex items-center justify-between px-4 bg-zinc-900/50 backdrop-blur-sm">
-        <div className="flex items-center gap-4">
+      <header className="h-12 border-b border-zinc-800 flex items-center justify-between px-3 bg-zinc-900/80 backdrop-blur-sm shrink-0">
+        <div className="flex items-center gap-3">
+          {/* Navigation Links */}
+          <div className="flex items-center gap-1 pr-3 border-r border-zinc-700">
+            <Link
+              href="/"
+              className="p-1.5 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400 hover:text-white"
+              title="Home"
+            >
+              <Home size={18} />
+            </Link>
+            <Link
+              href="/chat"
+              className="p-1.5 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400 hover:text-white"
+              title="Chat"
+            >
+              <MessageSquare size={18} />
+            </Link>
+            <Link
+              href="/agents"
+              className="p-1.5 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400 hover:text-white"
+              title="Agents"
+            >
+              <Bot size={18} />
+            </Link>
+            <Link
+              href="/tools"
+              className="p-1.5 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400 hover:text-white"
+              title="Tools"
+            >
+              <Wrench size={18} />
+            </Link>
+          </div>
+
           <button
             onClick={() => setShowSidebar(!showSidebar)}
-            className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400 hover:text-white"
+            title={showSidebar ? 'Hide sidebar' : 'Show sidebar'}
           >
             {showSidebar ? <PanelLeftClose size={18} /> : <PanelLeft size={18} />}
           </button>
 
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-lg flex items-center justify-center">
-              <Sparkles size={16} />
+            <div className="w-7 h-7 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-lg flex items-center justify-center">
+              <Sparkles size={14} />
             </div>
-            <div>
-              <h1 className="font-semibold text-sm">Opsuna Builder</h1>
-              <p className="text-[10px] text-zinc-500">AI-Powered UI Generator</p>
-            </div>
+            <span className="font-semibold text-sm">Opsuna Builder</span>
           </div>
 
           {currentProject && (
-            <div className="ml-4 px-3 py-1 bg-zinc-800 rounded-full text-xs text-zinc-400">
+            <div className="px-2.5 py-1 bg-zinc-800/80 rounded-md text-xs text-zinc-400 border border-zinc-700">
               {currentProject.name}
             </div>
           )}
-        </div>
 
-        <div className="flex items-center gap-2">
-          {/* View Mode Toggle */}
-          <div className="flex items-center bg-zinc-800 rounded-lg p-1">
+          {/* Mode Toggle */}
+          <div className="flex items-center bg-zinc-800/50 rounded-lg p-0.5 ml-3">
             <button
-              onClick={() => setViewMode('preview')}
-              className={`p-2 rounded-md transition-colors ${
-                viewMode === 'preview' ? 'bg-zinc-700 text-white' : 'text-zinc-400 hover:text-white'
+              onClick={() => setBuilderMode('tambo')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                builderMode === 'tambo'
+                  ? 'bg-violet-600 text-white'
+                  : 'text-zinc-400 hover:text-white'
               }`}
-              title="Preview Only"
             >
-              <Eye size={16} />
+              <Sparkles size={12} />
+              Live UI
             </button>
             <button
-              onClick={() => setViewMode('split')}
-              className={`p-2 rounded-md transition-colors ${
-                viewMode === 'split' ? 'bg-zinc-700 text-white' : 'text-zinc-400 hover:text-white'
+              onClick={() => setBuilderMode('code')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                builderMode === 'code'
+                  ? 'bg-zinc-700 text-white'
+                  : 'text-zinc-400 hover:text-white'
               }`}
-              title="Split View"
             >
-              <Layers size={16} />
-            </button>
-            <button
-              onClick={() => setViewMode('code')}
-              className={`p-2 rounded-md transition-colors ${
-                viewMode === 'code' ? 'bg-zinc-700 text-white' : 'text-zinc-400 hover:text-white'
-              }`}
-              title="Code Only"
-            >
-              <Code2 size={16} />
+              <Code2 size={12} />
+              Code Gen
             </button>
           </div>
+        </div>
 
-          <div className="w-px h-6 bg-zinc-700" />
+        <div className="flex items-center gap-1.5">
+          {/* Device Preview Buttons */}
+          <div className="flex items-center bg-zinc-800/50 rounded-lg p-0.5 mr-2">
+            {(['desktop', 'tablet', 'mobile'] as DeviceMode[]).map((device) => {
+              const Icon = device === 'desktop' ? Monitor : device === 'tablet' ? Tablet : Smartphone;
+              return (
+                <button
+                  key={device}
+                  onClick={() => setDeviceMode(device)}
+                  className={`p-1.5 rounded-md transition-colors ${
+                    deviceMode === device
+                      ? 'bg-zinc-700 text-white'
+                      : 'text-zinc-500 hover:text-zinc-300'
+                  }`}
+                  title={DEVICE_SIZES[device].label}
+                >
+                  <Icon size={14} />
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="w-px h-5 bg-zinc-700" />
 
           {/* Action Buttons */}
           <button
             onClick={handleCopyCode}
-            className="p-2 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400 hover:text-white"
-            title="Copy Code"
+            className="p-1.5 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400 hover:text-white"
+            title="Copy code"
           >
-            {copied ? <Check size={18} className="text-green-400" /> : <Copy size={18} />}
+            {copied ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
           </button>
 
           <button
             onClick={handleRefreshPreview}
-            className="p-2 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400 hover:text-white"
-            title="Refresh Preview"
+            className="p-1.5 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400 hover:text-white"
+            title="Refresh preview"
           >
-            <RefreshCw size={18} className={isGenerating ? 'animate-spin' : ''} />
+            <RefreshCw size={16} className={isGenerating ? 'animate-spin' : ''} />
           </button>
 
           <button
             onClick={() => setShowPalette(true)}
-            className="p-2 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400 hover:text-white"
-            title="Component Library"
+            className="p-1.5 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400 hover:text-white"
+            title="Component library"
           >
-            <FileCode size={18} />
+            <FileCode size={16} />
           </button>
 
-          <div className="w-px h-6 bg-zinc-700" />
+          <button
+            onClick={toggleFullscreen}
+            className="p-1.5 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400 hover:text-white"
+            title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen preview'}
+          >
+            {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+          </button>
+
+          <div className="w-px h-5 bg-zinc-700" />
 
           <button
             onClick={() => useBuilderStore.getState().saveProject()}
-            className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400 hover:text-white"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400 hover:text-white text-sm"
           >
-            <Save size={16} />
-            <span className="text-sm">Save</span>
+            <Save size={14} />
+            Save
           </button>
 
           <button
             onClick={() => setShowExportModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 rounded-lg transition-colors font-medium text-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 rounded-lg transition-colors font-medium text-sm"
           >
-            <Download size={16} />
+            <Download size={14} />
             Export
           </button>
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Project Sidebar */}
-        <AnimatePresence>
-          {showSidebar && (
-            <motion.div
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 280, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="border-r border-zinc-800 bg-zinc-900/30 overflow-hidden"
-            >
-              <ProjectSidebar />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Chat Panel */}
-        <div className="w-[400px] border-r border-zinc-800 flex flex-col bg-zinc-900/20">
-          <BuilderChat />
-        </div>
-
-        {/* Preview / Code Panel */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {viewMode === 'split' ? (
-            <div className="flex-1 flex">
-              {/* File Tree + Code Editor */}
-              <div className="w-1/2 flex border-r border-zinc-800">
-                <div className="w-48 border-r border-zinc-800 bg-zinc-900/30">
-                  <FileTree />
-                </div>
-                <div className="flex-1">
-                  <CodeEditor />
-                </div>
+      {/* Fullscreen Preview Mode */}
+      <AnimatePresence>
+        {isFullscreen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-zinc-950"
+          >
+            <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+              <div className="flex items-center bg-zinc-800 rounded-lg p-1">
+                {(['desktop', 'tablet', 'mobile'] as DeviceMode[]).map((device) => {
+                  const Icon = device === 'desktop' ? Monitor : device === 'tablet' ? Tablet : Smartphone;
+                  return (
+                    <button
+                      key={device}
+                      onClick={() => setDeviceMode(device)}
+                      className={`p-2 rounded-md transition-colors ${
+                        deviceMode === device ? 'bg-zinc-700 text-white' : 'text-zinc-500 hover:text-zinc-300'
+                      }`}
+                    >
+                      <Icon size={16} />
+                    </button>
+                  );
+                })}
               </div>
-              {/* Preview */}
-              <div className="w-1/2">
+              <button
+                onClick={toggleFullscreen}
+                className="p-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="h-full flex items-center justify-center p-8 bg-zinc-900/50">
+              <div
+                className="h-full bg-white rounded-lg overflow-hidden shadow-2xl transition-all duration-300"
+                style={{ width: DEVICE_SIZES[deviceMode].width, maxWidth: '100%' }}
+              >
                 <CodePreview key={previewKey} />
               </div>
             </div>
-          ) : viewMode === 'code' ? (
-            <div className="flex-1 flex">
-              <div className="w-48 border-r border-zinc-800 bg-zinc-900/30">
-                <FileTree />
-              </div>
-              <div className="flex-1">
-                <CodeEditor />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Main Content */}
+      <div className="flex-1 flex overflow-hidden">
+        {builderMode === 'tambo' ? (
+          /* Tambo Live UI Builder */
+          <TamboBuilder />
+        ) : (
+          /* Code Generation Builder */
+          <>
+            {/* Project Sidebar */}
+            <AnimatePresence>
+              {showSidebar && (
+                <motion.div
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: 260, opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="border-r border-zinc-800 bg-zinc-900/50 overflow-hidden shrink-0"
+                >
+                  <ProjectSidebar />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Chat Panel - Resizable */}
+            <div
+              className="border-r border-zinc-800 flex flex-col bg-zinc-900/30 shrink-0 relative"
+              style={{ width: chatWidth }}
+            >
+              <BuilderChat />
+
+              {/* Resize Handle */}
+              <div
+                onMouseDown={handleMouseDown}
+                className={`absolute right-0 top-0 bottom-0 w-2 cursor-col-resize transition-all group ${
+                  isResizing ? 'bg-violet-500' : 'bg-gradient-to-b from-transparent via-zinc-600/30 to-transparent hover:via-violet-500/50'
+                }`}
+              >
+                <div className={`absolute right-0 top-1/2 -translate-y-1/2 -translate-x-1/2 p-1.5 rounded-md bg-zinc-800 border border-zinc-700/50 transition-all ${
+                  isResizing ? 'opacity-100 border-violet-500/50' : 'opacity-50 group-hover:opacity-100'
+                }`}>
+                  <GripVertical size={14} className={`${isResizing ? 'text-violet-400' : 'text-zinc-500 group-hover:text-zinc-300'}`} />
+                </div>
               </div>
             </div>
-          ) : (
-            <CodePreview key={previewKey} />
-          )}
-        </div>
+
+            {/* Preview / Code Panel */}
+            <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+              {/* Tab Header */}
+              <div className="h-10 border-b border-zinc-800 flex items-center justify-between px-3 bg-zinc-900/30 shrink-0">
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setRightTab('preview')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                      rightTab === 'preview'
+                        ? 'bg-zinc-800 text-white'
+                        : 'text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    <Eye size={14} />
+                    Preview
+                  </button>
+                  <button
+                    onClick={() => setRightTab('code')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                      rightTab === 'code'
+                        ? 'bg-zinc-800 text-white'
+                        : 'text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    <Code2 size={14} />
+                    Code
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-zinc-500">
+                  {activeFile && (
+                    <span className="px-2 py-0.5 bg-zinc-800 rounded">{activeFile}</span>
+                  )}
+                  <span>{Object.keys(files).length} files</span>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-hidden">
+                {rightTab === 'preview' ? (
+                  <div className="h-full flex items-center justify-center p-4 bg-zinc-900/20">
+                    <div
+                      className="h-full bg-white rounded-lg overflow-hidden shadow-xl transition-all duration-300"
+                      style={{
+                        width: DEVICE_SIZES[deviceMode].width,
+                        maxWidth: '100%',
+                        border: deviceMode !== 'desktop' ? '8px solid #27272a' : undefined,
+                        borderRadius: deviceMode !== 'desktop' ? '20px' : '8px',
+                      }}
+                    >
+                      <CodePreview key={previewKey} />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-full flex">
+                    <div className="w-44 border-r border-zinc-800 bg-zinc-900/50 shrink-0 overflow-auto">
+                      <FileTree />
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      <CodeEditor />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Export Modal */}
@@ -241,10 +463,10 @@ export default function BuilderPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-violet-600 rounded-full flex items-center gap-2 shadow-lg shadow-violet-500/20"
+            className="fixed bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-violet-600 rounded-full flex items-center gap-2 shadow-lg shadow-violet-500/25 z-40"
           >
             <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-            <span className="text-sm font-medium">AI is generating your UI...</span>
+            <span className="text-sm font-medium">Generating...</span>
           </motion.div>
         )}
       </AnimatePresence>

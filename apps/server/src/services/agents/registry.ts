@@ -15,6 +15,7 @@ import { builtinAgents } from './builtin';
 
 /**
  * Initialize built-in agents in the database.
+ * ALWAYS updates existing agents to ensure latest prompts are used.
  */
 export async function initializeBuiltinAgents(): Promise<void> {
   for (const agent of builtinAgents) {
@@ -40,6 +41,19 @@ export async function initializeBuiltinAgents(): Promise<void> {
         },
       });
       console.log(`[Agents] Created built-in agent: ${agent.name}`);
+    } else {
+      // ALWAYS update built-in agents to ensure latest prompts
+      await prisma.agent.update({
+        where: { id: existing.id },
+        data: {
+          description: agent.description,
+          systemPrompt: agent.systemPrompt,
+          toolNames: agent.toolNames,
+          icon: agent.icon,
+          config: agent.config ? (agent.config as Prisma.InputJsonValue) : Prisma.JsonNull,
+        },
+      });
+      console.log(`[Agents] Synced built-in agent: ${agent.name}`);
     }
   }
 }

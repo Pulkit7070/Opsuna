@@ -14,6 +14,8 @@ import {
   createJiraTicket,
   runDatabaseMigration,
   listGithubRepos,
+  createChart,
+  analyzeCodebase,
 } from './implementations';
 
 type ToolImplementation = (
@@ -35,6 +37,8 @@ const localImplementations: Record<string, ToolImplementation> = {
   create_jira_ticket: createJiraTicket as ToolImplementation,
   run_database_migration: runDatabaseMigration as ToolImplementation,
   list_github_repos: listGithubRepos as ToolImplementation,
+  create_chart: createChart as ToolImplementation,
+  analyze_codebase: analyzeCodebase as ToolImplementation,
 };
 
 export async function routeToolCall(

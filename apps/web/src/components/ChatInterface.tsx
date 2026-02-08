@@ -210,7 +210,7 @@ export function ChatInterface() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {messages.length === 0 ? (
-          <EmptyState onExampleClick={(text) => setInput(text)} />
+          <EmptyState onExampleClick={(text) => setInput(text)} agentName={selectedAgent?.name} />
         ) : (
           <AnimatePresence mode="popLayout">
             {messages.map((message) => (
@@ -273,13 +273,54 @@ export function ChatInterface() {
   );
 }
 
-function EmptyState({ onExampleClick }: { onExampleClick: (text: string) => void }) {
-  const examples = [
+// Agent-specific example prompts
+const agentExamples: Record<string, string[]> = {
+  default: [
     'Deploy the latest code to staging and run smoke tests',
     'Create a GitHub PR for the feature branch and notify the team on Slack',
     'Run database migrations and verify the schema changes',
     'Send a deployment notification to #engineering channel',
-  ];
+  ],
+  'Deep Research': [
+    'Research the latest trends in AI and machine learning',
+    'Find documentation about implementing OAuth2 flows',
+    'Analyze best practices for microservices architecture',
+    'Search for case studies on successful DevOps transformations',
+  ],
+  'Data Analyst': [
+    'Create a bar chart with Q1: 150, Q2: 220, Q3: 180, Q4: 290',
+    'Show a pie chart of market share: Apple 45%, Samsung 30%, Others 25%',
+    'Generate a line chart showing monthly growth from Jan to Dec',
+    'Create an area chart for daily active users over a week',
+  ],
+  'DevOps Engineer': [
+    'Deploy the staging environment and run smoke tests',
+    'Set up CI/CD pipeline for the new microservice',
+    'Monitor system health and alert on anomalies',
+    'Create infrastructure for a new production cluster',
+  ],
+  'Code Reviewer': [
+    'Analyze the codebase architecture and generate a diagram',
+    'Review the frontend code structure and patterns',
+    'Generate an architecture overview for the backend',
+    'Check the project structure and identify technologies used',
+  ],
+  'Security Auditor': [
+    'Audit the authentication flow for vulnerabilities',
+    'Check API endpoints for security issues',
+    'Review database access patterns for SQL injection risks',
+    'Scan dependencies for known security vulnerabilities',
+  ],
+  'Project Manager': [
+    'Create a Jira ticket for the new feature request',
+    'Send a project status update to the team on Slack',
+    'Generate a sprint summary and share with stakeholders',
+    'Create tasks for the upcoming release cycle',
+  ],
+};
+
+function EmptyState({ onExampleClick, agentName }: { onExampleClick: (text: string) => void; agentName?: string }) {
+  const examples = agentExamples[agentName || 'default'] || agentExamples.default;
 
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-4">
@@ -287,11 +328,13 @@ function EmptyState({ onExampleClick }: { onExampleClick: (text: string) => void
         <Bot className="w-8 h-8 text-accent" />
       </div>
       <h2 className="font-semibold text-xl text-text-primary mb-2">
-        What would you like to do?
+        {agentName ? `What should ${agentName} help with?` : 'What would you like to do?'}
       </h2>
       <p className="text-text-muted text-sm mb-8 max-w-md">
-        Describe your task in natural language. I'll create an execution plan,
-        show you what will happen, and wait for your approval before running anything.
+        {agentName
+          ? `${agentName} is ready to assist. Try one of these examples or describe your task.`
+          : "Describe your task in natural language. I'll create an execution plan, show you what will happen, and wait for your approval before running anything."
+        }
       </p>
       <div className="grid gap-2 w-full max-w-lg">
         {examples.map((example, index) => (

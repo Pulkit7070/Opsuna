@@ -18,7 +18,7 @@ const SLACK_CHANNELS: Record<string, { id: string; name: string; members: number
 
 export async function postSlackMessage(
   callId: string,
-  params: { channel: string; message: string },
+  params: Record<string, unknown>,
   onLog: (log: ToolLog) => void
 ): Promise<ToolResult> {
   const startTime = Date.now();
@@ -31,7 +31,15 @@ export async function postSlackMessage(
   };
 
   try {
-    const channelKey = params.channel.startsWith('#') ? params.channel : `#${params.channel}`;
+    // Validate required parameters
+    const channel = params.channel as string;
+    const message = params.message as string;
+
+    if (!channel || !message) {
+      throw new Error('Missing required parameters: channel and message');
+    }
+
+    const channelKey = channel.startsWith('#') ? channel : `#${channel}`;
     const channelInfo = SLACK_CHANNELS[channelKey] || {
       id: `C${Date.now().toString(36).toUpperCase()}`,
       name: params.channel.replace('#', ''),
@@ -47,7 +55,7 @@ export async function postSlackMessage(
     addLog('info', `Found channel: ${channelInfo.name} (${channelInfo.members} members)`);
     await delay(100);
 
-    addLog('info', `Posting message (${params.message.length} characters)...`);
+    addLog('info', `Posting message (${message.length} characters)...`);
     await delay(300);
 
     const messageTs = `${Math.floor(Date.now() / 1000)}.${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
@@ -70,7 +78,7 @@ export async function postSlackMessage(
         message: {
           type: 'message',
           subtype: 'bot_message',
-          text: params.message,
+          text: message,
           ts: messageTs,
           username: 'Opsuna Bot',
           icons: { emoji: ':robot_face:' },

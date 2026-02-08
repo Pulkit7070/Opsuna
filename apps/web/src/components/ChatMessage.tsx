@@ -2,10 +2,43 @@
 
 import { forwardRef } from 'react';
 import { motion } from 'framer-motion';
-import { User, Bot, Zap, CheckCircle2, XCircle, Clock, Loader2 } from 'lucide-react';
+import { User, Bot, Zap, CheckCircle2, XCircle, Clock, Loader2, BarChart3 } from 'lucide-react';
 import { ExecutionPlan, ToolCallResult, ExecutionStatus } from '@opsuna/shared';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { DataChart } from '@/components/tambo/DataChart';
+import dynamic from 'next/dynamic';
+
+// Dynamically import MermaidDiagram to avoid SSR issues
+const MermaidDiagram = dynamic(
+  () => import('@/components/tambo/MermaidDiagram').then(mod => mod.MermaidDiagram),
+  { ssr: false, loading: () => <div className="p-4 text-text-muted">Loading diagram...</div> }
+);
+
+// Visualization data types
+interface ChartVisualization {
+  type: 'chart';
+  component: 'DataChart';
+  props: {
+    title: string;
+    type: 'line' | 'bar' | 'pie' | 'area';
+    data: Array<{ name: string; value: number }>;
+    xAxisLabel?: string;
+    yAxisLabel?: string;
+  };
+}
+
+interface DiagramVisualization {
+  type: 'diagram';
+  component: 'MermaidDiagram';
+  props: {
+    title: string;
+    diagram: string;
+    diagramType?: 'flowchart' | 'sequence' | 'class' | 'er' | 'state';
+  };
+}
+
+type VisualizationData = ChartVisualization | DiagramVisualization;
 
 export type MessageRole = 'user' | 'assistant' | 'system' | 'execution';
 
@@ -177,6 +210,18 @@ function ResultsSummary({ results }: { results: ToolCallResult[] }) {
   const successCount = results.filter((r) => r.status === 'success').length;
   const failedCount = results.filter((r) => r.status === 'failed').length;
 
+  // Extract all visualizations from results
+  const visualizations = results
+    .filter((r) => r.status === 'success' && r.result)
+    .map((r) => {
+      const resultData = r.result as Record<string, unknown> | null;
+      return resultData?.visualization as VisualizationData | undefined;
+    })
+    .filter((v): v is VisualizationData => v?.type === 'chart' || v?.type === 'diagram');
+
+  const chartResults = visualizations.filter((v): v is ChartVisualization => v.type === 'chart');
+  const diagramResults = visualizations.filter((v): v is DiagramVisualization => v.type === 'diagram');
+
   return (
     <div className="mt-3 p-3 bg-bg-primary rounded-lg border border-border-subtle">
       <div className="flex items-center gap-4 mb-2">
@@ -199,6 +244,7 @@ function ResultsSummary({ results }: { results: ToolCallResult[] }) {
         </div>
       </div>
 
+      {/* Tool status list */}
       <div className="space-y-1">
         {results.map((result) => (
           <div
@@ -219,6 +265,53 @@ function ResultsSummary({ results }: { results: ToolCallResult[] }) {
           </div>
         ))}
       </div>
+
+      {/* Render Diagram Visualizations */}
+      {diagramResults.length > 0 && (
+        <div className="mt-4 space-y-4">
+          {diagramResults.map((diagram, index) => (
+            <motion.div
+              key={`diagram-${index}`}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+            >
+              <MermaidDiagram
+                title={diagram.props.title}
+                diagram={diagram.props.diagram}
+                diagramType={diagram.props.diagramType}
+              />
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Render Chart Visualizations */}
+      {chartResults.length > 0 && (
+        <div className="mt-4 space-y-4">
+          {chartResults.map((chart, index) => (
+            <motion.div
+              key={`chart-${index}`}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="p-4 bg-bg-elevated rounded-xl border border-border-subtle"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <BarChart3 className="w-4 h-4 text-accent" />
+                <span className="text-sm font-medium text-text-primary">
+                  {chart.props.title}
+                </span>
+              </div>
+              <DataChart
+                title={chart.props.title}
+                type={chart.props.type}
+                data={chart.props.data}
+                xAxisLabel={chart.props.xAxisLabel}
+                yAxisLabel={chart.props.yAxisLabel}
+              />
+            </motion.div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

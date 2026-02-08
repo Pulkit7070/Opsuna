@@ -278,10 +278,11 @@ export function ComponentPalette({ isOpen, onClose }: ComponentPaletteProps) {
         onClick={onClose}
       >
         <motion.div
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.95, opacity: 0 }}
-          className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col"
+          initial={{ scale: 0.95, opacity: 0, y: 10 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: 10 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          className="bg-gradient-to-b from-zinc-900 to-zinc-950 border border-zinc-800/80 rounded-2xl w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col shadow-2xl shadow-black/50"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -345,18 +346,18 @@ export function ComponentPalette({ isOpen, onClose }: ComponentPaletteProps) {
               {filteredTemplates.map((template) => (
                 <motion.button
                   key={template.id}
-                  whileHover={{ scale: 1.02 }}
+                  whileHover={{ scale: 1.03, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleSelectTemplate(template)}
-                  className="p-4 bg-zinc-800/50 hover:bg-zinc-800 border border-zinc-700/50 hover:border-violet-500/50 rounded-xl text-left transition-all group"
+                  className="p-4 bg-zinc-800/50 hover:bg-zinc-800 border border-zinc-700/50 hover:border-violet-500/50 rounded-xl text-left transition-all group hover:shadow-xl hover:shadow-violet-500/10"
                 >
-                  <div className="w-10 h-10 bg-violet-500/20 rounded-lg flex items-center justify-center mb-3 group-hover:bg-violet-500/30 transition-colors">
-                    <template.icon size={20} className="text-violet-400" />
+                  <div className="w-11 h-11 bg-gradient-to-br from-violet-500/20 to-violet-600/10 rounded-xl flex items-center justify-center mb-3 group-hover:from-violet-500/30 group-hover:to-violet-600/20 transition-all">
+                    <template.icon size={22} className="text-violet-400" />
                   </div>
-                  <h3 className="font-medium text-sm mb-1">{template.name}</h3>
+                  <h3 className="font-medium text-sm mb-1.5">{template.name}</h3>
                   <p className="text-xs text-zinc-500 line-clamp-2">{template.description}</p>
-                  <div className="mt-2">
-                    <span className="text-[10px] px-2 py-0.5 bg-zinc-700 rounded-full text-zinc-400">
+                  <div className="mt-3">
+                    <span className="text-[10px] px-2.5 py-1 bg-zinc-700/80 rounded-full text-zinc-400">
                       {template.category}
                     </span>
                   </div>

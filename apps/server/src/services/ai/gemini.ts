@@ -23,22 +23,25 @@ export async function generatePlan(prompt: string, systemPrompt: string): Promis
     throw new Error('Gemini client not initialized');
   }
 
-  const model = client.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  // Use system instruction for better prompt following
+  const model = client.getGenerativeModel({
+    model: 'gemini-2.0-flash',
+    systemInstruction: systemPrompt,
+  });
 
   const result = await model.generateContent({
     contents: [
       {
         role: 'user',
         parts: [
-          { text: systemPrompt },
-          { text: `User request: ${prompt}` },
+          { text: prompt },
         ],
       },
     ],
     generationConfig: {
-      temperature: 0.3,
-      topK: 40,
-      topP: 0.95,
+      temperature: 0.2, // Lower temperature for more predictable tool selection
+      topK: 20,
+      topP: 0.9,
       maxOutputTokens: 4096,
     },
   });

@@ -61,6 +61,7 @@ export async function buildAgentContext(
 
 /**
  * Build tools description for agent (filtered by allowed tools).
+ * Uses detailed format with full parameter descriptions.
  */
 function buildAgentToolsDescription(agent: Agent): string {
   const allTools = registry.list();
@@ -72,14 +73,31 @@ function buildAgentToolsDescription(agent: Agent): string {
     return 'No tools available for this agent.';
   }
 
-  const lines = allowedTools.map((tool: Tool) => {
-    const params = tool.parameters
-      .map((p: Tool['parameters'][number]) => `${p.name}${p.required ? '' : '?'}: ${p.type}`)
-      .join(', ');
-    return `- ${tool.name}(${params}): ${tool.description}`;
-  });
+  // Use detailed format matching the base prompt
+  const toolDescriptions = allowedTools.map((tool: Tool, i: number) => {
+    const params = tool.parameters.map(p => {
+      const req = p.required ? ' (required)' : ' (optional)';
+      const enumStr = p.enum ? ` [options: ${p.enum.join(', ')}]` : '';
+      return `     - ${p.name}: ${p.type}${req} - ${p.description}${enumStr}`;
+    }).join('\n');
 
-  return `Available tools:\n${lines.join('\n')}`;
+    return `${i + 1}. ${tool.name} - ${tool.description}
+   Risk: ${tool.riskLevel}
+   Parameters:
+${params}`;
+  }).join('\n\n');
+
+  // Emphasize the PRIMARY tool for this agent
+  const primaryTool = agent.toolNames[0];
+  const primaryNote = primaryTool
+    ? `\n\nPRIMARY TOOL: "${primaryTool}" - Use this as your default choice for the agent's main purpose.\n`
+    : '';
+
+  return `AVAILABLE TOOLS FOR THIS AGENT:
+${primaryNote}
+${toolDescriptions}
+
+IMPORTANT: Only use tools from this list. Select the most appropriate tool based on the user's request.`;
 }
 
 /**

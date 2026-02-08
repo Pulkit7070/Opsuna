@@ -5,6 +5,19 @@ import { ToolCallResult } from '@opsuna/shared';
 import { CheckCircle2, XCircle, Clock, BarChart3, FileText, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { DataChart } from './DataChart';
+
+interface VisualizationData {
+  type: 'chart';
+  component: 'DataChart';
+  props: {
+    title: string;
+    type: 'line' | 'bar' | 'pie' | 'area';
+    data: Array<{ name: string; value: number }>;
+    xAxisLabel?: string;
+    yAxisLabel?: string;
+  };
+}
 
 interface ToolResultSummaryProps {
   results: ToolCallResult[];
@@ -84,6 +97,10 @@ function ResultCard({ result, index }: { result: ToolCallResult; index: number }
   const summary = getToolSummary(result);
   const highlights = getHighlightFields(result);
 
+  // Check for visualization data
+  const resultData = result.result as Record<string, unknown> | null;
+  const visualization = resultData?.visualization as VisualizationData | undefined;
+
   return (
     <motion.div
       initial={{ opacity: 0, x: -10 }}
@@ -125,6 +142,23 @@ function ResultCard({ result, index }: { result: ToolCallResult; index: number }
 
       {result.result != null && typeof result.result === 'object' && (
         <div className="mt-3 ml-7 space-y-2">
+          {/* Visualization rendering for charts */}
+          {visualization?.type === 'chart' && visualization.component === 'DataChart' && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mb-4 p-4 bg-black/20 rounded-xl border border-white/5"
+            >
+              <DataChart
+                title={visualization.props.title}
+                type={visualization.props.type}
+                data={visualization.props.data}
+                xAxisLabel={visualization.props.xAxisLabel}
+                yAxisLabel={visualization.props.yAxisLabel}
+              />
+            </motion.div>
+          )}
+
           {/* Show highlight fields prominently */}
           {highlights.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-2">
@@ -135,16 +169,19 @@ function ResultCard({ result, index }: { result: ToolCallResult; index: number }
               ))}
             </div>
           )}
-          {/* Show key results inline */}
+          {/* Show key results inline (skip visualization object) */}
           <div className="grid grid-cols-2 gap-2 text-sm">
-            {Object.entries(result.result as Record<string, unknown>).slice(0, 6).map(([key, value]) => (
-              <div key={key} className="flex items-start gap-2">
-                <span className="text-text-muted">{formatKey(key)}:</span>
-                <span className="text-text-secondary font-mono truncate">
-                  {formatValue(value)}
-                </span>
-              </div>
-            ))}
+            {Object.entries(result.result as Record<string, unknown>)
+              .filter(([key]) => key !== 'visualization')
+              .slice(0, 6)
+              .map(([key, value]) => (
+                <div key={key} className="flex items-start gap-2">
+                  <span className="text-text-muted">{formatKey(key)}:</span>
+                  <span className="text-text-secondary font-mono truncate">
+                    {formatValue(value)}
+                  </span>
+                </div>
+              ))}
           </div>
           {/* Full JSON in collapsible */}
           <details className="text-sm">
@@ -189,6 +226,10 @@ function getToolSummary(result: ToolCallResult): string | null {
       return `CI ${data.status}: ${data.totalPassed || 0} passed, ${data.totalFailed || 0} failed`;
     case 'run_database_migration':
       return `Applied ${data.appliedMigrations || 0} migrations to ${data.database}`;
+    case 'create_chart': {
+      const viz = data.visualization as VisualizationData | undefined;
+      return viz ? `Generated ${viz.props?.type || 'chart'}: "${viz.props?.title}"` : 'Chart created';
+    }
     default:
       return null;
   }
@@ -234,6 +275,21 @@ function getHighlightFields(result: ToolCallResult): Array<{ label: string; valu
         { label: 'Status', value: String(data.status) },
         { label: 'Duration', value: String(data.totalDuration || '-') },
       ];
+    case 'create_chart': {
+      const viz = data.visualization as VisualizationData | undefined;
+      const stats = data.statistics as Record<string, number> | undefined;
+      const highlights = [];
+      if (viz?.props?.type) {
+        highlights.push({ label: 'Chart Type', value: viz.props.type });
+      }
+      if (viz?.props?.data?.length) {
+        highlights.push({ label: 'Data Points', value: String(viz.props.data.length) });
+      }
+      if (stats?.average) {
+        highlights.push({ label: 'Average', value: stats.average.toLocaleString() });
+      }
+      return highlights;
+    }
     default:
       return [];
   }

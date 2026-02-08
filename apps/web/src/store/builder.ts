@@ -70,6 +70,13 @@ interface BuilderState {
 }
 
 const DEFAULT_FILES: Record<string, string> = {
+  'index.tsx': `import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+
+const root = ReactDOM.createRoot(document.getElementById('root')!);
+root.render(<App />);
+`,
   'App.tsx': `import React from 'react';
 
 export default function App() {
@@ -91,18 +98,9 @@ export default function App() {
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-}
-
-.dark {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
-}
-
 body {
-  @apply bg-background text-foreground;
+  margin: 0;
+  padding: 0;
 }
 `
 };

@@ -267,12 +267,105 @@ const mockScenarios: MockScenario[] = [
       ],
     }),
   },
+  {
+    keywords: ['code', 'codebase', 'architecture', 'structure', 'review', 'analyze', 'diagram', 'frontend', 'backend'],
+    getPlan: (prompt: string) => {
+      // Determine focus area from prompt
+      let focusArea = 'full';
+      const lower = prompt.toLowerCase();
+      if (lower.includes('frontend') || lower.includes('web') || lower.includes('ui') || lower.includes('client')) {
+        focusArea = 'frontend';
+      } else if (lower.includes('backend') || lower.includes('server') || lower.includes('api')) {
+        focusArea = 'backend';
+      }
+
+      return {
+        summary: `Analyze ${focusArea} codebase and generate architecture diagram`,
+        riskLevel: 'LOW',
+        riskReason: 'Read-only analysis with no side effects',
+        steps: [
+          {
+            id: `step-${uuid().slice(0, 8)}`,
+            order: 1,
+            toolName: 'analyze_codebase',
+            description: `Analyze ${focusArea} code structure and generate architecture diagram`,
+            parameters: {
+              repoPath: '.',
+              focusArea,
+            },
+            riskLevel: 'LOW',
+          },
+        ],
+      };
+    },
+  },
+  {
+    keywords: ['chart', 'graph', 'visualize', 'bar', 'line', 'pie', 'sales', 'revenue', 'metrics'],
+    getPlan: (prompt: string) => {
+      // Extract chart type
+      let chartType: 'bar' | 'line' | 'pie' | 'area' = 'bar';
+      if (prompt.toLowerCase().includes('line')) chartType = 'line';
+      else if (prompt.toLowerCase().includes('pie')) chartType = 'pie';
+      else if (prompt.toLowerCase().includes('area')) chartType = 'area';
+
+      // Try to extract data from prompt (e.g., "Q1=100, Q2=150, Q3=120, Q4=200")
+      const dataMatches = prompt.match(/([A-Za-z0-9]+)\s*[=:]\s*(\d+)/g);
+      const data = dataMatches
+        ? dataMatches.map(match => {
+            const [name, value] = match.split(/[=:]/);
+            return { name: name.trim(), value: parseInt(value.trim(), 10) };
+          })
+        : [
+            { name: 'Q1', value: 100 },
+            { name: 'Q2', value: 150 },
+            { name: 'Q3', value: 120 },
+            { name: 'Q4', value: 200 },
+          ];
+
+      // Extract title
+      const titleMatch = prompt.match(/(?:showing|titled?|called)\s+['"]?([^'",.]+)['"]?/i);
+      const title = titleMatch?.[1]?.trim() || 'Data Visualization';
+
+      return {
+        summary: `Create a ${chartType} chart visualization`,
+        riskLevel: 'LOW',
+        riskReason: 'Read-only data visualization with no side effects',
+        steps: [
+          {
+            id: `step-${uuid().slice(0, 8)}`,
+            order: 1,
+            toolName: 'create_chart',
+            description: `Generate ${chartType} chart: "${title}"`,
+            parameters: {
+              title,
+              chartType,
+              data,
+              xAxisLabel: 'Category',
+              yAxisLabel: 'Value',
+            },
+            riskLevel: 'LOW',
+          },
+        ],
+      };
+    },
+  },
 ];
 
 export function generateMockPlan(prompt: string): ExecutionPlan {
   const lowerPrompt = prompt.toLowerCase();
 
   // Check for specific strong keyword matches FIRST (more specific beats generic)
+
+  // CODE ANALYSIS - highest priority for code review requests
+  if (lowerPrompt.includes('code') || lowerPrompt.includes('codebase') ||
+      lowerPrompt.includes('architecture') || lowerPrompt.includes('structure') ||
+      lowerPrompt.includes('diagram') || lowerPrompt.includes('patterns') ||
+      (lowerPrompt.includes('review') && !lowerPrompt.includes('pr')) ||
+      (lowerPrompt.includes('analyze') && (lowerPrompt.includes('frontend') || lowerPrompt.includes('backend')))) {
+    console.log('[Mock] Matched code analysis scenario');
+    return mockScenarios[7].getPlan(prompt); // Code analysis scenario
+  }
+
   if (lowerPrompt.includes('branch') && lowerPrompt.includes('create')) {
     console.log('[Mock] Matched create branch scenario');
     return mockScenarios[0].getPlan(prompt);
@@ -285,13 +378,20 @@ export function generateMockPlan(prompt: string): ExecutionPlan {
     console.log('[Mock] Matched GitHub PR scenario');
     return mockScenarios[2].getPlan(prompt);
   }
-  if (lowerPrompt.includes('slack') || lowerPrompt.includes('notify') || lowerPrompt.includes('message')) {
+  if (lowerPrompt.includes('slack') || lowerPrompt.includes('notify team')) {
     console.log('[Mock] Matched Slack scenario');
-    return mockScenarios[3].getPlan(prompt);
+    return mockScenarios[4].getPlan(prompt);
   }
   if (lowerPrompt.includes('list') && (lowerPrompt.includes('repo') || lowerPrompt.includes('github'))) {
     console.log('[Mock] Matched list repos scenario');
-    return mockScenarios[4].getPlan(prompt);
+    return mockScenarios[5].getPlan(prompt);
+  }
+  if (lowerPrompt.includes('chart') || lowerPrompt.includes('graph') ||
+      lowerPrompt.includes('visualize') || lowerPrompt.includes('visualization') ||
+      lowerPrompt.includes('sales') || lowerPrompt.includes('revenue') ||
+      (lowerPrompt.includes('data') && (lowerPrompt.includes('bar') || lowerPrompt.includes('line') || lowerPrompt.includes('pie')))) {
+    console.log('[Mock] Matched chart/visualization scenario');
+    return mockScenarios[8].getPlan(prompt); // Chart scenario (now index 8 after code analysis)
   }
 
   // Find matching scenario based on keywords
@@ -303,19 +403,19 @@ export function generateMockPlan(prompt: string): ExecutionPlan {
     }
   }
 
-  // Default fallback plan
-  console.log('[Mock] Using default fallback plan');
+  // Default fallback: analyze codebase (safe, read-only operation)
+  console.log('[Mock] Using default fallback: analyze_codebase');
   return {
-    summary: 'Execute requested automation task',
-    riskLevel: 'MEDIUM' as RiskLevel,
-    riskReason: 'Default risk level for unrecognized commands',
+    summary: 'Analyze codebase structure',
+    riskLevel: 'LOW' as RiskLevel,
+    riskReason: 'Read-only analysis with no side effects',
     steps: [
       {
         id: `step-${uuid().slice(0, 8)}`,
         order: 1,
-        toolName: getToolName('slack_sends_a_message_to_a_slack_channel', 'post_slack_message'),
-        description: 'Notify team about requested action',
-        parameters: { channel: '#general', text: `Processing: ${prompt}` },
+        toolName: 'analyze_codebase',
+        description: 'Analyze codebase and generate architecture overview',
+        parameters: { repoPath: '.', focusArea: 'full' },
         riskLevel: 'LOW' as RiskLevel,
       },
     ],

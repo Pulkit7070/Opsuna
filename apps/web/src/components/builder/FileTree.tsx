@@ -48,21 +48,21 @@ export function FileTree() {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="h-10 border-b border-zinc-800 flex items-center justify-between px-3">
-        <span className="text-xs font-medium text-zinc-400">Files</span>
+      <div className="h-11 border-b border-zinc-800/80 flex items-center justify-between px-4 bg-zinc-900/50">
+        <span className="text-sm font-medium text-zinc-300">Files</span>
         <button
           onClick={() => setIsAddingFile(true)}
-          className="p-1 text-zinc-500 hover:text-white rounded transition-colors"
+          className="p-1.5 text-zinc-500 hover:text-white hover:bg-zinc-800 rounded-lg transition-all"
           title="Add file"
         >
-          <FilePlus size={14} />
+          <FilePlus size={15} />
         </button>
       </div>
 
       {/* File List */}
-      <div className="flex-1 overflow-auto py-2">
+      <div className="flex-1 overflow-auto py-3">
         {/* Virtual folder structure */}
-        <div className="px-2">
+        <div className="px-3">
           <button
             onClick={() => {
               const newSet = new Set(expandedFolders);
@@ -73,15 +73,15 @@ export function FileTree() {
               }
               setExpandedFolders(newSet);
             }}
-            className="flex items-center gap-1 w-full py-1 px-2 text-xs text-zinc-400 hover:text-white transition-colors"
+            className="flex items-center gap-2 w-full py-2 px-3 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/50 rounded-lg transition-all"
           >
-            {expandedFolders.has('src') ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-            <Folder size={12} className="text-yellow-500" />
-            <span>src</span>
+            {expandedFolders.has('src') ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            <Folder size={14} className="text-yellow-500" />
+            <span className="font-medium">src</span>
           </button>
 
           {expandedFolders.has('src') && (
-            <div className="ml-4">
+            <div className="ml-3 mt-1 space-y-0.5">
               {fileList.map((filename) => {
                 const Icon = getFileIcon(filename);
                 const isActive = activeFile === filename;
@@ -89,16 +89,16 @@ export function FileTree() {
                 return (
                   <div
                     key={filename}
-                    className={`group flex items-center justify-between py-1 px-2 rounded cursor-pointer transition-colors ${
+                    className={`group flex items-center justify-between py-2 px-3 rounded-lg cursor-pointer transition-all ${
                       isActive
-                        ? 'bg-violet-500/20 text-violet-300'
-                        : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                        ? 'bg-violet-500/20 text-violet-200 ring-1 ring-violet-500/40'
+                        : 'text-zinc-400 hover:bg-zinc-800/70 hover:text-white'
                     }`}
                     onClick={() => setActiveFile(filename)}
                   >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Icon size={12} className={isActive ? 'text-violet-400' : 'text-zinc-500'} />
-                      <span className="text-xs truncate">{filename}</span>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Icon size={14} className={isActive ? 'text-violet-400' : 'text-zinc-500'} />
+                      <span className="text-sm truncate">{filename}</span>
                     </div>
                     <button
                       onClick={(e) => {
@@ -107,9 +107,9 @@ export function FileTree() {
                           deleteFile(filename);
                         }
                       }}
-                      className="p-1 opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-red-400 transition-all"
+                      className="p-1.5 opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-all"
                     >
-                      <Trash2 size={10} />
+                      <Trash2 size={12} />
                     </button>
                   </div>
                 );
@@ -117,7 +117,7 @@ export function FileTree() {
 
               {/* Add file input */}
               {isAddingFile && (
-                <div className="py-1 px-2">
+                <div className="py-1 px-3">
                   <input
                     type="text"
                     value={newFileName}
@@ -129,7 +129,7 @@ export function FileTree() {
                       }
                     }}
                     placeholder="filename.tsx"
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-violet-500"
+                    className="w-full bg-zinc-800/80 border border-zinc-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 transition-all"
                     autoFocus
                   />
                 </div>
@@ -140,8 +140,8 @@ export function FileTree() {
       </div>
 
       {/* Footer */}
-      <div className="border-t border-zinc-800 p-2">
-        <div className="text-[10px] text-zinc-600 text-center">
+      <div className="border-t border-zinc-800/80 p-3 bg-zinc-900/30">
+        <div className="text-xs text-zinc-500 text-center">
           {fileList.length} file{fileList.length !== 1 ? 's' : ''}
         </div>
       </div>

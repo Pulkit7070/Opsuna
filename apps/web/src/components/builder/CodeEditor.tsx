@@ -108,27 +108,27 @@ export function CodeEditor() {
   return (
     <div className="h-full flex flex-col bg-zinc-950">
       {/* Header */}
-      <div className="h-10 border-b border-zinc-800 flex items-center justify-between px-3">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-zinc-400">{activeFile}</span>
-          <span className="text-[10px] text-zinc-600 px-1.5 py-0.5 bg-zinc-800 rounded">
+      <div className="h-11 border-b border-zinc-800/80 flex items-center justify-between px-4 bg-zinc-900/50">
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-zinc-300 font-medium">{activeFile}</span>
+          <span className="text-[10px] text-zinc-500 px-2 py-1 bg-zinc-800/80 rounded-md border border-zinc-700/30">
             {language.toUpperCase()}
           </span>
         </div>
         <div className="flex items-center gap-1">
           <button
             onClick={handleCopy}
-            className="p-1.5 text-zinc-500 hover:text-white rounded transition-colors"
+            className="p-2 text-zinc-500 hover:text-white hover:bg-zinc-800 rounded-lg transition-all"
             title="Copy code"
           >
-            {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+            {copied ? <Check size={15} className="text-green-400" /> : <Copy size={15} />}
           </button>
           <button
             onClick={handleDownload}
-            className="p-1.5 text-zinc-500 hover:text-white rounded transition-colors"
+            className="p-2 text-zinc-500 hover:text-white hover:bg-zinc-800 rounded-lg transition-all"
             title="Download file"
           >
-            <Download size={14} />
+            <Download size={15} />
           </button>
         </div>
       </div>
@@ -137,9 +137,9 @@ export function CodeEditor() {
       <div className="flex-1 overflow-auto font-mono text-sm">
         <div className="flex min-h-full">
           {/* Line numbers */}
-          <div className="sticky left-0 bg-zinc-950 text-right pr-4 pl-4 py-4 select-none text-zinc-600 border-r border-zinc-800">
+          <div className="sticky left-0 bg-zinc-950/80 text-right pr-6 pl-6 py-6 select-none text-zinc-600 border-r border-zinc-800/50">
             {Array.from({ length: lineNumbers }, (_, i) => (
-              <div key={i + 1} className="leading-6">
+              <div key={i + 1} className="leading-7 hover:text-zinc-400 transition-colors">
                 {i + 1}
               </div>
             ))}
@@ -148,7 +148,7 @@ export function CodeEditor() {
           {/* Code content */}
           <div className="flex-1 relative">
             <pre
-              className="absolute inset-0 p-4 leading-6 overflow-auto pointer-events-none"
+              className="absolute inset-0 p-6 leading-7 overflow-auto pointer-events-none selection:bg-violet-500/30"
               dangerouslySetInnerHTML={{
                 __html: highlightCode(code, language),
               }}
@@ -156,9 +156,9 @@ export function CodeEditor() {
             <textarea
               value={code}
               onChange={(e) => updateFile(activeFile, e.target.value)}
-              className="w-full h-full p-4 leading-6 bg-transparent text-transparent caret-white resize-none focus:outline-none font-mono"
+              className="w-full h-full p-6 leading-7 bg-transparent text-transparent caret-violet-400 resize-none focus:outline-none font-mono selection:bg-violet-500/30"
               spellCheck={false}
-              style={{ minHeight: `${lineNumbers * 24 + 32}px` }}
+              style={{ minHeight: `${lineNumbers * 28 + 48}px` }}
             />
           </div>
         </div>

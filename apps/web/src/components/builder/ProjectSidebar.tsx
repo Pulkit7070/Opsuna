@@ -178,14 +178,14 @@ export function ProjectSidebar() {
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden"
             >
-              <div className="px-3 pb-3 space-y-3">
+              <div className="px-4 pb-4 space-y-4">
                 {/* Framework */}
                 <div>
-                  <label className="block text-[10px] text-zinc-500 mb-1">Framework</label>
+                  <label className="block text-xs font-medium text-zinc-400 mb-2">Framework</label>
                   <select
                     value={settings.framework}
                     onChange={(e) => updateSettings({ framework: e.target.value as any })}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-violet-500"
+                    className="w-full bg-zinc-800/80 border border-zinc-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 transition-all"
                   >
                     <option value="react">React</option>
                     <option value="nextjs">Next.js</option>
@@ -195,11 +195,11 @@ export function ProjectSidebar() {
 
                 {/* Styling */}
                 <div>
-                  <label className="block text-[10px] text-zinc-500 mb-1">Styling</label>
+                  <label className="block text-xs font-medium text-zinc-400 mb-2">Styling</label>
                   <select
                     value={settings.styling}
                     onChange={(e) => updateSettings({ styling: e.target.value as any })}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-violet-500"
+                    className="w-full bg-zinc-800/80 border border-zinc-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 transition-all"
                   >
                     <option value="tailwind">Tailwind CSS</option>
                     <option value="css">Plain CSS</option>
@@ -208,14 +208,14 @@ export function ProjectSidebar() {
                 </div>
 
                 {/* TypeScript */}
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className="flex items-center gap-3 cursor-pointer p-2 -mx-2 rounded-lg hover:bg-zinc-800/50 transition-colors">
                   <input
                     type="checkbox"
                     checked={settings.typescript}
                     onChange={(e) => updateSettings({ typescript: e.target.checked })}
                     className="w-4 h-4 rounded bg-zinc-800 border-zinc-700 text-violet-500 focus:ring-violet-500/50"
                   />
-                  <span className="text-xs text-zinc-400">TypeScript</span>
+                  <span className="text-sm text-zinc-300">TypeScript</span>
                 </label>
               </div>
             </motion.div>
@@ -240,30 +240,33 @@ function ProjectCard({
   return (
     <motion.div
       layout
-      className={`group p-2 rounded-lg cursor-pointer transition-colors ${
+      whileHover={{ scale: 1.01 }}
+      className={`group p-3 rounded-xl cursor-pointer transition-all ${
         isActive
-          ? 'bg-violet-500/20 border border-violet-500/30'
-          : 'hover:bg-zinc-800/50 border border-transparent'
+          ? 'bg-violet-500/20 border border-violet-500/40 shadow-lg shadow-violet-500/10'
+          : 'hover:bg-zinc-800/70 border border-zinc-800/50 hover:border-zinc-700/50'
       }`}
       onClick={onSelect}
     >
       <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2 min-w-0">
-          <FolderOpen size={14} className={isActive ? 'text-violet-400' : 'text-zinc-500'} />
-          <span className="text-sm truncate">{project.name}</span>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className={`p-1.5 rounded-lg ${isActive ? 'bg-violet-500/20' : 'bg-zinc-800'}`}>
+            <FolderOpen size={14} className={isActive ? 'text-violet-400' : 'text-zinc-500'} />
+          </div>
+          <span className="text-sm font-medium truncate">{project.name}</span>
         </div>
         <button
           onClick={(e) => {
             e.stopPropagation();
             onDelete();
           }}
-          className="p-1 opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-red-400 transition-all"
+          className="p-1.5 opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-all"
         >
           <Trash2 size={12} />
         </button>
       </div>
-      <div className="flex items-center gap-2 mt-1 text-[10px] text-zinc-600">
-        <Clock size={10} />
+      <div className="flex items-center gap-2 mt-2 ml-8 text-xs text-zinc-500">
+        <Clock size={11} />
         <span>{new Date(project.updatedAt).toLocaleDateString()}</span>
         <span>•</span>
         <span>{Object.keys(project.files).length} files</span>

@@ -31,30 +31,31 @@ import { AnimatedBadge } from '@/components/ui/animated-badge';
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/' },
   { label: 'Chat', href: '/chat' },
+  { label: 'Builder', href: '/builder' },
   { label: 'Agents', href: '/agents' },
   { label: 'Tools', href: '/tools' },
 ];
 
 const FEATURES = [
   {
-    title: 'Deployment Automation',
-    description: 'Push to staging or production with full preview. See exactly what will happen before it happens.',
+    title: 'AI UI Builder',
+    description: 'Generate beautiful UIs instantly with Tambo AI. Describe what you want, get production-ready components.',
+    gradient: 'from-violet-500/20 to-transparent',
+  },
+  {
+    title: 'Smart Agents',
+    description: 'Specialized AI agents for research, data analysis, and DevOps. Each with tailored tools and memory.',
     gradient: 'from-accent/20 to-transparent',
   },
   {
-    title: 'Integrated Testing',
-    description: 'Run smoke tests, integration suites, and get instant feedback with detailed failure analysis.',
+    title: 'Tool Orchestration',
+    description: 'Connect GitHub, Slack, and 300+ tools. Execute complex workflows with natural language commands.',
     gradient: 'from-success/20 to-transparent',
   },
   {
-    title: 'Team Notifications',
-    description: 'Slack messages, GitHub issues, email alerts—all orchestrated automatically from your commands.',
+    title: 'Safe Execution',
+    description: 'Preview every action before it runs. Full audit trails, intent tokens, and instant rollbacks.',
     gradient: 'from-warning/20 to-transparent',
-  },
-  {
-    title: 'Safe Rollbacks',
-    description: 'Something went wrong? One-click rollback with complete audit trail and state restoration.',
-    gradient: 'from-destructive/20 to-transparent',
   },
 ];
 

@@ -91,7 +91,9 @@ export const ERROR_PROMPT = `The user's request could not be processed. Respond 
 }`;
 
 export function buildPrompt(userPrompt: string, tools?: Tool[]): string {
-  return `${getSystemPrompt(tools)}\n\nUser request: ${userPrompt}\n\nRespond with the execution plan JSON:`;
+  // Note: userPrompt is included here for backwards compat but
+  // the actual user message is passed separately to Gemini
+  return `${getSystemPrompt(tools)}\n\nRespond with the execution plan JSON for the user's request.`;
 }
 
 /**
@@ -105,15 +107,15 @@ export async function buildPromptWithMemory(
 ): Promise<string> {
   const parts: string[] = [getSystemPrompt(tools)];
 
-  // Add memory context section
+  // Add memory context section (uses userPrompt for semantic search)
   const memoryContext = await buildMemoryContext(userId, userPrompt);
   if (memoryContext) {
     parts.push('\nCONTEXT FROM MEMORY:');
     parts.push(memoryContext);
   }
 
-  parts.push(`\nUser request: ${userPrompt}`);
-  parts.push('\nRespond with the execution plan JSON:');
+  // User request is passed separately to Gemini, not included in system prompt
+  parts.push('\nRespond with the execution plan JSON for the user\'s request.');
 
   return parts.join('\n');
 }
@@ -303,9 +305,9 @@ RULES:
       parts.push('\n' + context.toolPatterns);
     }
 
-    // User request
-    parts.push(`\nUser request: ${userPrompt}`);
-    parts.push('\nRespond with the execution plan JSON:');
+    // User request is passed separately to Gemini as the user message
+    // Just add the instruction to respond
+    parts.push('\nAnalyze the user\'s request and respond with the execution plan JSON. Select tools based on the TOOL SELECTION GUIDE above.');
 
     return parts.join('\n');
   } catch (error) {

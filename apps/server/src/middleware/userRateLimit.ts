@@ -44,11 +44,11 @@ export const userApiLimiter = rateLimit({
 
 /**
  * Execution rate limiter - stricter per user
- * 15 execution requests per minute per user (respects Gemini free tier)
+ * 60 execution requests per minute per user (increased for dev/testing)
  */
 export const userExecuteLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 15, // 15 executions per minute per user
+  max: 60, // 60 executions per minute per user
   keyGenerator: userKeyGenerator,
   message: {
     success: false,

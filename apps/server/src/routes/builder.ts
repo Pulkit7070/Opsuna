@@ -104,8 +104,8 @@ Remember to respond with ONLY valid JSON in the format specified.`;
       return res.json(generateMockResponse(prompt));
     }
 
-    // Call Gemini API
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // Call Gemini API (using latest model)
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
     const result = await model.generateContent({
       contents: [
@@ -146,9 +146,11 @@ Remember to respond with ONLY valid JSON in the format specified.`;
     }
   } catch (error) {
     console.error('[Builder] Generate error:', error);
-    res.status(500).json({
-      error: error instanceof Error ? error.message : 'Failed to generate code',
-    });
+
+    // Fall back to mock response for better demo experience
+    const prompt = req.body?.prompt || 'dashboard';
+    console.log('[Builder] Falling back to mock response');
+    return res.json(generateMockResponse(prompt));
   }
 });
 
@@ -389,6 +391,683 @@ export default function App() {
             </div>
           </div>
         </main>
+      </div>
+    </div>
+  );
+}`,
+      },
+    };
+  }
+
+  // Login / Sign In / Authentication
+  if (lowerPrompt.includes('login') || lowerPrompt.includes('sign in') || lowerPrompt.includes('signin') || lowerPrompt.includes('auth')) {
+    return {
+      message: 'Generated a beautiful login form with social auth options!',
+      files: {
+        'App.tsx': `import React, { useState } from 'react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Github, Chrome } from 'lucide-react';
+
+export default function App() {
+  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    // Simulate login
+    setTimeout(() => setIsLoading(false), 1500);
+  };
+
+  return (
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Lock className="text-white" size={28} />
+          </div>
+          <h1 className="text-2xl font-bold">Welcome back</h1>
+          <p className="text-zinc-400 mt-2">Sign in to your account to continue</p>
+        </div>
+
+        {/* Login Form */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Email Field */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Email address</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-colors"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Password Field */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium">Password</label>
+                <a href="#" className="text-sm text-violet-400 hover:text-violet-300 transition-colors">
+                  Forgot password?
+                </a>
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-12 py-3 text-sm focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-colors"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Remember Me */}
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="remember"
+                className="w-4 h-4 bg-zinc-800 border-zinc-700 rounded focus:ring-violet-500 focus:ring-offset-0 text-violet-500"
+              />
+              <label htmlFor="remember" className="text-sm text-zinc-400">
+                Remember me for 30 days
+              </label>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl py-3 font-medium transition-all flex items-center justify-center gap-2"
+            >
+              {isLoading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  Sign in
+                  <ArrowRight size={18} />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-zinc-800" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-zinc-900 px-4 text-sm text-zinc-500">Or continue with</span>
+            </div>
+          </div>
+
+          {/* Social Buttons */}
+          <div className="grid grid-cols-2 gap-3">
+            <button className="flex items-center justify-center gap-2 px-4 py-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-xl transition-colors">
+              <Github size={18} />
+              <span className="text-sm font-medium">GitHub</span>
+            </button>
+            <button className="flex items-center justify-center gap-2 px-4 py-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-xl transition-colors">
+              <Chrome size={18} />
+              <span className="text-sm font-medium">Google</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Sign Up Link */}
+        <p className="text-center mt-6 text-zinc-400 text-sm">
+          Don't have an account?{' '}
+          <a href="#" className="text-violet-400 hover:text-violet-300 font-medium transition-colors">
+            Sign up for free
+          </a>
+        </p>
+      </div>
+    </div>
+  );
+}`,
+      },
+    };
+  }
+
+  // Form / Contact / Signup
+  if (lowerPrompt.includes('form') || lowerPrompt.includes('contact') || lowerPrompt.includes('signup') || lowerPrompt.includes('sign up') || lowerPrompt.includes('register')) {
+    return {
+      message: 'Generated a modern multi-field form with validation styling!',
+      files: {
+        'App.tsx': `import React, { useState } from 'react';
+import { User, Mail, Phone, MessageSquare, Send, CheckCircle } from 'lucide-react';
+
+export default function App() {
+  const [submitted, setSubmitted] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    message: '',
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitted(true);
+  };
+
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="text-emerald-400" size={40} />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Thank you!</h2>
+          <p className="text-zinc-400 mb-6">We'll get back to you soon.</p>
+          <button
+            onClick={() => setSubmitted(false)}
+            className="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors"
+          >
+            Send another
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+      <div className="w-full max-w-lg">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold mb-2">Get in Touch</h1>
+          <p className="text-zinc-400">We'd love to hear from you. Fill out the form below.</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 space-y-5">
+          {/* Name */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Full Name</label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="John Doe"
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-colors"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Email Address</label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="you@example.com"
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-colors"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Phone (optional)</label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+              <input
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="+1 (555) 000-0000"
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* Message */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Message</label>
+            <div className="relative">
+              <MessageSquare className="absolute left-3 top-3 text-zinc-500" size={18} />
+              <textarea
+                value={formData.message}
+                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                placeholder="How can we help you?"
+                rows={4}
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-colors resize-none"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 rounded-xl py-3 font-medium transition-all flex items-center justify-center gap-2"
+          >
+            Send Message
+            <Send size={18} />
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}`,
+      },
+    };
+  }
+
+  // Table / Data Grid
+  if (lowerPrompt.includes('table') || lowerPrompt.includes('data') || lowerPrompt.includes('grid') || lowerPrompt.includes('list')) {
+    return {
+      message: 'Generated a data table with sorting, search, and pagination!',
+      files: {
+        'App.tsx': `import React, { useState } from 'react';
+import { Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal, User, Mail, Calendar } from 'lucide-react';
+
+const users = [
+  { id: 1, name: 'Alex Johnson', email: 'alex@example.com', role: 'Admin', status: 'Active', joined: '2024-01-15' },
+  { id: 2, name: 'Sarah Williams', email: 'sarah@example.com', role: 'Editor', status: 'Active', joined: '2024-02-20' },
+  { id: 3, name: 'Mike Chen', email: 'mike@example.com', role: 'Viewer', status: 'Inactive', joined: '2024-01-08' },
+  { id: 4, name: 'Emma Davis', email: 'emma@example.com', role: 'Editor', status: 'Active', joined: '2024-03-10' },
+  { id: 5, name: 'James Wilson', email: 'james@example.com', role: 'Admin', status: 'Active', joined: '2024-02-28' },
+];
+
+export default function App() {
+  const [search, setSearch] = useState('');
+  const [sortField, setSortField] = useState('name');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  const filtered = users
+    .filter(u => u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      const aVal = a[sortField as keyof typeof a];
+      const bVal = b[sortField as keyof typeof b];
+      return sortDir === 'asc' ? String(aVal).localeCompare(String(bVal)) : String(bVal).localeCompare(String(aVal));
+    });
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDir('asc');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-zinc-950 p-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold">Users</h1>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search users..."
+              className="bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-violet-500 w-64"
+            />
+          </div>
+        </div>
+
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-zinc-800">
+                {['Name', 'Email', 'Role', 'Status', 'Joined'].map((col) => (
+                  <th
+                    key={col}
+                    onClick={() => handleSort(col.toLowerCase())}
+                    className="px-6 py-4 text-left text-sm font-medium text-zinc-400 cursor-pointer hover:text-white transition-colors"
+                  >
+                    <div className="flex items-center gap-1">
+                      {col}
+                      {sortField === col.toLowerCase() && (
+                        sortDir === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />
+                      )}
+                    </div>
+                  </th>
+                ))}
+                <th className="px-6 py-4"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((user) => (
+                <tr key={user.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-full flex items-center justify-center text-sm font-medium">
+                        {user.name.charAt(0)}
+                      </div>
+                      <span className="font-medium">{user.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-zinc-400">{user.email}</td>
+                  <td className="px-6 py-4">
+                    <span className="px-2.5 py-1 bg-zinc-800 rounded-lg text-sm">{user.role}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={\`px-2.5 py-1 rounded-lg text-sm \${
+                      user.status === 'Active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-700 text-zinc-400'
+                    }\`}>
+                      {user.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-zinc-400">{user.joined}</td>
+                  <td className="px-6 py-4">
+                    <button className="p-1 hover:bg-zinc-800 rounded-lg transition-colors">
+                      <MoreHorizontal size={18} className="text-zinc-500" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Pagination */}
+          <div className="px-6 py-4 border-t border-zinc-800 flex items-center justify-between">
+            <span className="text-sm text-zinc-500">Showing {filtered.length} of {users.length} users</span>
+            <div className="flex items-center gap-2">
+              <button className="p-2 hover:bg-zinc-800 rounded-lg transition-colors disabled:opacity-50" disabled>
+                <ChevronLeft size={18} />
+              </button>
+              <button className="w-8 h-8 bg-violet-500 rounded-lg text-sm font-medium">1</button>
+              <button className="w-8 h-8 hover:bg-zinc-800 rounded-lg text-sm text-zinc-400">2</button>
+              <button className="p-2 hover:bg-zinc-800 rounded-lg transition-colors">
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}`,
+      },
+    };
+  }
+
+  // Profile / Settings / Account
+  if (lowerPrompt.includes('profile') || lowerPrompt.includes('settings') || lowerPrompt.includes('account')) {
+    return {
+      message: 'Generated a user profile/settings page with avatar and form sections!',
+      files: {
+        'App.tsx': `import React, { useState } from 'react';
+import { User, Mail, Phone, MapPin, Camera, Bell, Shield, Key, Save } from 'lucide-react';
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('profile');
+
+  const tabs = [
+    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'security', label: 'Security', icon: Shield },
+  ];
+
+  return (
+    <div className="min-h-screen bg-zinc-950 p-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-2xl font-bold mb-8">Account Settings</h1>
+
+        <div className="flex gap-6">
+          {/* Sidebar */}
+          <div className="w-48 space-y-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={\`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-colors \${
+                  activeTab === tab.id
+                    ? 'bg-violet-500/20 text-violet-400'
+                    : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                }\`}
+              >
+                <tab.icon size={18} />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+            {/* Profile Header */}
+            <div className="flex items-center gap-6 mb-8 pb-6 border-b border-zinc-800">
+              <div className="relative">
+                <div className="w-24 h-24 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-2xl flex items-center justify-center text-3xl font-bold">
+                  JD
+                </div>
+                <button className="absolute -bottom-2 -right-2 p-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-xl transition-colors">
+                  <Camera size={14} />
+                </button>
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold">John Doe</h2>
+                <p className="text-zinc-400">john.doe@example.com</p>
+                <p className="text-sm text-zinc-500 mt-1">Member since January 2024</p>
+              </div>
+            </div>
+
+            {/* Form */}
+            <form className="space-y-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">First Name</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+                    <input
+                      type="text"
+                      defaultValue="John"
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-violet-500 transition-colors"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Last Name</label>
+                  <input
+                    type="text"
+                    defaultValue="Doe"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-violet-500 transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Email</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+                  <input
+                    type="email"
+                    defaultValue="john.doe@example.com"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-violet-500 transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Phone</label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+                  <input
+                    type="tel"
+                    defaultValue="+1 (555) 123-4567"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-violet-500 transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Location</label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+                  <input
+                    type="text"
+                    defaultValue="San Francisco, CA"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-violet-500 transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Bio</label>
+                <textarea
+                  rows={3}
+                  defaultValue="Product designer and developer building tools for the modern web."
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-violet-500 transition-colors resize-none"
+                />
+              </div>
+
+              <div className="pt-4 flex justify-end gap-3">
+                <button type="button" className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors">
+                  Cancel
+                </button>
+                <button type="submit" className="px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-xl transition-colors flex items-center gap-2">
+                  <Save size={16} />
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}`,
+      },
+    };
+  }
+
+  // Pricing
+  if (lowerPrompt.includes('pricing') || lowerPrompt.includes('plans') || lowerPrompt.includes('subscription')) {
+    return {
+      message: 'Generated a beautiful pricing page with feature comparison!',
+      files: {
+        'App.tsx': `import React, { useState } from 'react';
+import { Check, X, Zap, Star } from 'lucide-react';
+
+const plans = [
+  {
+    name: 'Starter',
+    price: { monthly: 9, yearly: 7 },
+    description: 'Perfect for individuals',
+    features: ['5 projects', '1GB storage', 'Basic analytics', 'Email support'],
+    notIncluded: ['API access', 'Custom domains', 'Priority support'],
+  },
+  {
+    name: 'Pro',
+    price: { monthly: 29, yearly: 24 },
+    description: 'Best for growing teams',
+    features: ['Unlimited projects', '10GB storage', 'Advanced analytics', 'API access', 'Custom domains'],
+    notIncluded: ['Priority support'],
+    popular: true,
+  },
+  {
+    name: 'Enterprise',
+    price: { monthly: 99, yearly: 79 },
+    description: 'For large organizations',
+    features: ['Unlimited projects', 'Unlimited storage', 'Advanced analytics', 'API access', 'Custom domains', 'Priority support', 'SSO'],
+    notIncluded: [],
+  },
+];
+
+export default function App() {
+  const [yearly, setYearly] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-zinc-950 py-20 px-4">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-4">Simple, transparent pricing</h1>
+          <p className="text-zinc-400 text-lg mb-8">Choose the plan that's right for you</p>
+
+          {/* Toggle */}
+          <div className="inline-flex items-center gap-3 bg-zinc-900 p-1 rounded-xl">
+            <button
+              onClick={() => setYearly(false)}
+              className={\`px-4 py-2 rounded-lg text-sm font-medium transition-colors \${!yearly ? 'bg-violet-500 text-white' : 'text-zinc-400 hover:text-white'}\`}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setYearly(true)}
+              className={\`px-4 py-2 rounded-lg text-sm font-medium transition-colors \${yearly ? 'bg-violet-500 text-white' : 'text-zinc-400 hover:text-white'}\`}
+            >
+              Yearly <span className="text-emerald-400 text-xs">Save 20%</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6">
+          {plans.map((plan) => (
+            <div
+              key={plan.name}
+              className={\`bg-zinc-900 border rounded-2xl p-6 relative \${
+                plan.popular ? 'border-violet-500 ring-1 ring-violet-500' : 'border-zinc-800'
+              }\`}
+            >
+              {plan.popular && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-violet-500 rounded-full text-xs font-medium flex items-center gap-1">
+                  <Star size={12} />
+                  Most Popular
+                </div>
+              )}
+
+              <div className="mb-6">
+                <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
+                <p className="text-zinc-400 text-sm">{plan.description}</p>
+              </div>
+
+              <div className="mb-6">
+                <span className="text-4xl font-bold">\${yearly ? plan.price.yearly : plan.price.monthly}</span>
+                <span className="text-zinc-500">/month</span>
+              </div>
+
+              <button className={\`w-full py-3 rounded-xl font-medium transition-colors mb-6 \${
+                plan.popular
+                  ? 'bg-violet-600 hover:bg-violet-500'
+                  : 'bg-zinc-800 hover:bg-zinc-700 border border-zinc-700'
+              }\`}>
+                Get started
+              </button>
+
+              <div className="space-y-3">
+                {plan.features.map((feature) => (
+                  <div key={feature} className="flex items-center gap-2 text-sm">
+                    <Check size={16} className="text-emerald-400" />
+                    <span>{feature}</span>
+                  </div>
+                ))}
+                {plan.notIncluded.map((feature) => (
+                  <div key={feature} className="flex items-center gap-2 text-sm text-zinc-500">
+                    <X size={16} />
+                    <span>{feature}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

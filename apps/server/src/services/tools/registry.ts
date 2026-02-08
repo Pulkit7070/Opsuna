@@ -229,3 +229,34 @@ registry.register({
     { name: 'sort', type: 'string', description: 'Sort order', required: false, enum: ['created', 'updated', 'stars'] },
   ],
 });
+
+registry.register({
+  name: 'create_chart',
+  displayName: 'Create Chart',
+  description: 'Create an interactive data visualization chart (line, bar, pie, or area)',
+  category: 'analytics',
+  riskLevel: 'LOW',
+  rollbackSupported: false,
+  source: 'local',
+  parameters: [
+    { name: 'title', type: 'string', description: 'Chart title', required: true },
+    { name: 'chartType', type: 'string', description: 'Type of chart', required: true, enum: ['line', 'bar', 'pie', 'area'] },
+    { name: 'data', type: 'array', description: 'Array of data points with name and value', required: true },
+    { name: 'xAxisLabel', type: 'string', description: 'Label for X axis', required: false },
+    { name: 'yAxisLabel', type: 'string', description: 'Label for Y axis', required: false },
+  ],
+});
+
+registry.register({
+  name: 'analyze_codebase',
+  displayName: 'Analyze Codebase',
+  description: 'Analyze codebase structure, detect technologies, patterns, and generate architecture diagrams',
+  category: 'analytics',
+  riskLevel: 'LOW',
+  rollbackSupported: false,
+  source: 'local',
+  parameters: [
+    { name: 'repoPath', type: 'string', description: 'Path to repository (defaults to current)', required: false },
+    { name: 'focusArea', type: 'string', description: 'Area to focus on', required: false, enum: ['full', 'frontend', 'backend', 'web', 'server'] },
+  ],
+});
