@@ -5,10 +5,12 @@ dotenv.config();
 export const config = {
   port: parseInt(process.env.PORT || '3001', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
-  // Allow multiple localhost ports in development
-  corsOrigin: process.env.CORS_ORIGIN || (process.env.NODE_ENV !== 'production'
-    ? ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003']
-    : 'http://localhost:3000'),
+  // Allow multiple origins (comma-separated in env var)
+  corsOrigin: process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
+    : (process.env.NODE_ENV !== 'production'
+      ? ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003']
+      : ['http://localhost:3000']),
   geminiApiKey: process.env.GEMINI_API_KEY || '',
   isDev: process.env.NODE_ENV !== 'production',
   isProd: process.env.NODE_ENV === 'production',

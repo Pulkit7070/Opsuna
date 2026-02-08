@@ -12,6 +12,11 @@ const originHandler = (origin: string | undefined, callback: (err: Error | null,
     ? config.corsOrigin
     : [config.corsOrigin];
 
+  // Log for debugging in production
+  if (config.isProd) {
+    console.log(`[CORS] Origin: ${origin}, Allowed: ${allowedOrigins.join(', ')}`);
+  }
+
   if (allowedOrigins.includes(origin)) {
     callback(null, true);
   } else if (config.isDev) {
@@ -19,10 +24,12 @@ const originHandler = (origin: string | undefined, callback: (err: Error | null,
     if (origin.startsWith('http://localhost:')) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      // Don't throw error, just deny - prevents 500
+      callback(null, false);
     }
   } else {
-    callback(new Error('Not allowed by CORS'));
+    // Don't throw error, just deny - prevents 500
+    callback(null, false);
   }
 };
 
