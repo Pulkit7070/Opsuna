@@ -6,8 +6,9 @@ export const config = {
   port: parseInt(process.env.PORT || '3001', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
   // Allow multiple origins (comma-separated in env var)
+  // Normalize: trim whitespace and remove trailing slashes
   corsOrigin: process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
+    ? process.env.CORS_ORIGIN.split(',').map(o => o.trim().replace(/\/+$/, ''))
     : (process.env.NODE_ENV !== 'production'
       ? ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003']
       : ['http://localhost:3000']),

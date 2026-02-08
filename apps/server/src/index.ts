@@ -52,6 +52,8 @@ async function bootstrap() {
 ║   Tools:       ${(config.composioApiKey ? 'Composio + Local' : 'Local only').padEnd(40)}║
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝
+
+   CORS Origins: ${JSON.stringify(config.corsOrigin)}
     `);
   });
 
