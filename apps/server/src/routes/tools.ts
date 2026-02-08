@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { registry } from '../services/tools/registry';
+import { executeTool } from '../services/tools/router';
 import {
   fetchComposioTools,
   fetchComposioToolsByApp,
@@ -11,6 +12,7 @@ import {
   revokeConnection,
 } from '../services/tools/composio';
 import { createError } from '../middleware/errorHandler';
+import { v4 as uuid } from 'uuid';
 
 const router = Router();
 
@@ -223,6 +225,52 @@ router.delete('/composio/connections/:appName', async (req, res, next) => {
       error instanceof Error ? error.message : 'Failed to revoke connection',
       500,
       'CONNECTION_REVOKE_FAILED'
+    ));
+  }
+});
+
+/**
+ * POST /api/tools/execute — Execute a single tool directly (for Quick Actions)
+ */
+router.post('/execute', async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    const { toolName, parameters } = req.body;
+
+    if (!toolName) {
+      return next(createError('toolName is required', 400, 'MISSING_TOOL_NAME'));
+    }
+
+    const tool = registry.get(toolName);
+    if (!tool) {
+      return next(createError(`Tool not found: ${toolName}`, 404, 'TOOL_NOT_FOUND'));
+    }
+
+    const callId = `quick-${uuid().slice(0, 8)}`;
+    const logs: Array<{ timestamp: Date; level: string; message: string }> = [];
+
+    const result = await executeTool(
+      toolName,
+      callId,
+      parameters || {},
+      (log) => logs.push(log),
+      userId
+    );
+
+    res.json({
+      success: result.success,
+      data: {
+        toolName,
+        result: result.data,
+        error: result.error,
+        logs,
+      },
+    });
+  } catch (error) {
+    next(createError(
+      error instanceof Error ? error.message : 'Tool execution failed',
+      500,
+      'TOOL_EXECUTE_FAILED'
     ));
   }
 });

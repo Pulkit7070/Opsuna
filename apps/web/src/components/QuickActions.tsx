@@ -4,9 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MessageSquare,
-  Download,
   FileSpreadsheet,
-  Bug,
   Mail,
   Share2,
   X,
@@ -14,8 +12,9 @@ import {
   Loader2,
   Hash,
 } from 'lucide-react';
+import { apiClient } from '@/lib/api/client';
 
-export type ActionType = 'slack' | 'download' | 'export' | 'jira' | 'email' | 'share';
+export type ActionType = 'slack' | 'download' | 'export' | 'email' | 'share';
 
 export interface QuickAction {
   type: ActionType;
@@ -38,8 +37,8 @@ interface QuickActionsProps {
 const actionsByContext: Record<string, QuickAction[]> = {
   diagram: [
     { type: 'slack', label: 'Share to Slack', icon: <MessageSquare className="w-4 h-4" />, description: 'Post diagram to a channel' },
-    { type: 'jira', label: 'Create Ticket', icon: <Bug className="w-4 h-4" />, description: 'Create a Jira ticket with this diagram' },
     { type: 'email', label: 'Email Report', icon: <Mail className="w-4 h-4" />, description: 'Send via email' },
+    { type: 'share', label: 'Copy Link', icon: <Share2 className="w-4 h-4" />, description: 'Copy shareable link' },
   ],
   chart: [
     { type: 'slack', label: 'Share to Slack', icon: <MessageSquare className="w-4 h-4" />, description: 'Post chart to a channel' },
@@ -48,11 +47,11 @@ const actionsByContext: Record<string, QuickAction[]> = {
   ],
   test: [
     { type: 'slack', label: 'Share Results', icon: <MessageSquare className="w-4 h-4" />, description: 'Post test results' },
-    { type: 'jira', label: 'Create Bug', icon: <Bug className="w-4 h-4" />, description: 'Create a bug ticket' },
+    { type: 'share', label: 'Copy Link', icon: <Share2 className="w-4 h-4" />, description: 'Copy shareable link' },
   ],
   deployment: [
     { type: 'slack', label: 'Notify Team', icon: <MessageSquare className="w-4 h-4" />, description: 'Notify about deployment' },
-    { type: 'jira', label: 'Update Ticket', icon: <Bug className="w-4 h-4" />, description: 'Update related ticket' },
+    { type: 'share', label: 'Copy Link', icon: <Share2 className="w-4 h-4" />, description: 'Copy shareable link' },
   ],
   default: [
     { type: 'slack', label: 'Share to Slack', icon: <MessageSquare className="w-4 h-4" />, description: 'Post to Slack' },
@@ -62,11 +61,11 @@ const actionsByContext: Record<string, QuickAction[]> = {
 
 export function QuickActions({ context, data, onAction }: QuickActionsProps) {
   const [showSlackModal, setShowSlackModal] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
   const [actionStatus, setActionStatus] = useState<Record<ActionType, 'idle' | 'loading' | 'success' | 'error'>>({
     slack: 'idle',
     download: 'idle',
     export: 'idle',
-    jira: 'idle',
     email: 'idle',
     share: 'idle',
   });
@@ -78,24 +77,20 @@ export function QuickActions({ context, data, onAction }: QuickActionsProps) {
       setShowSlackModal(true);
       return;
     }
+    if (type === 'email') {
+      setShowEmailModal(true);
+      return;
+    }
 
     setActionStatus((prev) => ({ ...prev, [type]: 'loading' }));
 
     try {
       switch (type) {
-        case 'download':
-          handleDownload();
-          break;
         case 'export':
           handleExportCSV();
           break;
         case 'share':
           await handleCopyLink();
-          break;
-        case 'jira':
-        case 'email':
-          // These would trigger their own flows
-          onAction?.(type, data);
           break;
       }
       setActionStatus((prev) => ({ ...prev, [type]: 'success' }));
@@ -104,17 +99,6 @@ export function QuickActions({ context, data, onAction }: QuickActionsProps) {
       setActionStatus((prev) => ({ ...prev, [type]: 'error' }));
       setTimeout(() => setActionStatus((prev) => ({ ...prev, [type]: 'idle' })), 2000);
     }
-  };
-
-  const handleDownload = () => {
-    if (!data?.svgContent) return;
-    const blob = new Blob([data.svgContent], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${data.title?.toLowerCase().replace(/\s+/g, '-') || 'diagram'}.svg`;
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   const handleExportCSV = () => {
@@ -136,14 +120,55 @@ export function QuickActions({ context, data, onAction }: QuickActionsProps) {
   const handleSlackSend = async (channel: string, message: string) => {
     setActionStatus((prev) => ({ ...prev, slack: 'loading' }));
     try {
+      // Actually call the API to send Slack message
+      await apiClient('/api/tools/execute', {
+        method: 'POST',
+        body: JSON.stringify({
+          toolName: 'post_slack_message',
+          parameters: {
+            channel,
+            message,
+          },
+        }),
+      });
       onAction?.('slack', { channel, message, ...data });
       setActionStatus((prev) => ({ ...prev, slack: 'success' }));
       setTimeout(() => {
         setActionStatus((prev) => ({ ...prev, slack: 'idle' }));
         setShowSlackModal(false);
       }, 1500);
-    } catch {
+    } catch (error) {
+      console.error('Failed to send to Slack:', error);
       setActionStatus((prev) => ({ ...prev, slack: 'error' }));
+      setTimeout(() => setActionStatus((prev) => ({ ...prev, slack: 'idle' })), 2000);
+    }
+  };
+
+  const handleEmailSend = async (to: string, subject: string, body: string) => {
+    setActionStatus((prev) => ({ ...prev, email: 'loading' }));
+    try {
+      // Actually call the API to send email
+      await apiClient('/api/tools/execute', {
+        method: 'POST',
+        body: JSON.stringify({
+          toolName: 'send_email',
+          parameters: {
+            to,
+            subject,
+            body,
+          },
+        }),
+      });
+      onAction?.('email', { to, subject, body, ...data });
+      setActionStatus((prev) => ({ ...prev, email: 'success' }));
+      setTimeout(() => {
+        setActionStatus((prev) => ({ ...prev, email: 'idle' }));
+        setShowEmailModal(false);
+      }, 1500);
+    } catch (error) {
+      console.error('Failed to send email:', error);
+      setActionStatus((prev) => ({ ...prev, email: 'error' }));
+      setTimeout(() => setActionStatus((prev) => ({ ...prev, email: 'idle' })), 2000);
     }
   };
 
@@ -192,6 +217,20 @@ export function QuickActions({ context, data, onAction }: QuickActionsProps) {
             onClose={() => setShowSlackModal(false)}
             isLoading={actionStatus.slack === 'loading'}
             isSuccess={actionStatus.slack === 'success'}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Email Modal */}
+      <AnimatePresence>
+        {showEmailModal && (
+          <EmailModal
+            title={data?.title || 'Result'}
+            content={data?.content}
+            onSend={handleEmailSend}
+            onClose={() => setShowEmailModal(false)}
+            isLoading={actionStatus.email === 'loading'}
+            isSuccess={actionStatus.email === 'success'}
           />
         )}
       </AnimatePresence>
@@ -317,6 +356,138 @@ function SlackShareModal({ title, content, onSend, onClose, isLoading, isSuccess
               <>
                 <MessageSquare className="w-4 h-4" />
                 Send to {channel}
+              </>
+            )}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+interface EmailModalProps {
+  title: string;
+  content?: string;
+  onSend: (to: string, subject: string, body: string) => void;
+  onClose: () => void;
+  isLoading?: boolean;
+  isSuccess?: boolean;
+}
+
+function EmailModal({ title, content, onSend, onClose, isLoading, isSuccess }: EmailModalProps) {
+  const [to, setTo] = useState('');
+  const [subject, setSubject] = useState(`Opsuna Report: ${title}`);
+  const [body, setBody] = useState(content || `Here's the ${title} report from Opsuna Tambo.`);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md bg-bg-surface rounded-xl border border-border-subtle shadow-2xl overflow-hidden"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-border-subtle">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+              <Mail className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-text-primary">Send Email</h3>
+              <p className="text-xs text-text-muted">Email this report</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-bg-elevated text-text-muted hover:text-text-primary transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-4 space-y-4">
+          {/* To */}
+          <div>
+            <label className="block text-xs font-medium text-text-muted mb-1.5">To</label>
+            <input
+              type="email"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              placeholder="email@example.com"
+              className="w-full px-3 py-2 bg-bg-primary border border-border-subtle rounded-lg
+                         text-sm text-text-primary placeholder:text-text-muted
+                         focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50"
+            />
+          </div>
+
+          {/* Subject */}
+          <div>
+            <label className="block text-xs font-medium text-text-muted mb-1.5">Subject</label>
+            <input
+              type="text"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              className="w-full px-3 py-2 bg-bg-primary border border-border-subtle rounded-lg
+                         text-sm text-text-primary placeholder:text-text-muted
+                         focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50"
+            />
+          </div>
+
+          {/* Body */}
+          <div>
+            <label className="block text-xs font-medium text-text-muted mb-1.5">Message</label>
+            <textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              rows={4}
+              className="w-full px-3 py-2 bg-bg-primary border border-border-subtle rounded-lg
+                         text-sm text-text-primary placeholder:text-text-muted
+                         focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50
+                         resize-none"
+            />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-2 p-4 border-t border-border-subtle bg-bg-elevated/50">
+          <button
+            onClick={onClose}
+            disabled={isLoading}
+            className="px-4 py-2 text-sm font-medium text-text-muted hover:text-text-primary
+                       rounded-lg hover:bg-bg-elevated transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => onSend(to, subject, body)}
+            disabled={isLoading || isSuccess || !to}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium
+                       bg-accent hover:bg-accent-hover text-bg-primary
+                       rounded-lg transition-colors disabled:opacity-50"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Sending...
+              </>
+            ) : isSuccess ? (
+              <>
+                <Check className="w-4 h-4" />
+                Sent!
+              </>
+            ) : (
+              <>
+                <Mail className="w-4 h-4" />
+                Send Email
               </>
             )}
           </button>

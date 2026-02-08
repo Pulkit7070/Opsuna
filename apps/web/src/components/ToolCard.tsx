@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Plug, Unplug, ExternalLink, Shield, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Plug, Unplug, ExternalLink, Shield, ShieldAlert, ShieldCheck, Wrench } from 'lucide-react';
 import { ToolItem } from '@/store/tools';
 import { Badge } from '@/components/ui/badge';
 
@@ -35,9 +35,7 @@ export function ToolCard({ tool, isConnected, onConnect, onDisconnect }: ToolCar
             <img src={tool.logo} alt={tool.displayName} className="w-8 h-8 rounded" />
           ) : (
             <div className="w-8 h-8 rounded bg-accent/10 border border-accent/20 flex items-center justify-center">
-              <span className="text-xs font-mono text-accent uppercase">
-                {tool.displayName.charAt(0)}
-              </span>
+              <Wrench className="w-4 h-4 text-accent" />
             </div>
           )}
           <div>
