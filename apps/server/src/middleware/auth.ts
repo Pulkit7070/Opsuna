@@ -53,6 +53,16 @@ declare global {
 }
 
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
+  // Skip auth for OPTIONS preflight requests (CORS)
+  if (req.method === 'OPTIONS') {
+    return next();
+  }
+
+  // Skip auth for health check
+  if (req.path === '/health' || req.path.startsWith('/health')) {
+    return next();
+  }
+
   const authHeader = req.headers.authorization;
 
   // If no auth header and dev mode, use mock user
