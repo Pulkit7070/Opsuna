@@ -143,24 +143,31 @@ async function searchMemoryByText(
   options: { type?: MemoryType; limit?: number } = {}
 ): Promise<MemoryRecord[]> {
   const { type, limit = 5 } = options;
+  const searchPattern = `%${query}%`;
 
-  const whereClause: any = { userId };
+  // Use separate queries for type-filtered and unfiltered cases
   if (type) {
-    whereClause.type = type;
+    const results = await prisma.$queryRaw<MemoryRecord[]>`
+      SELECT id, "userId", type, content, metadata, "createdAt"
+      FROM "Memory"
+      WHERE "userId" = ${userId}
+        AND type = ${type}
+        AND content ILIKE ${searchPattern}
+      ORDER BY "createdAt" DESC
+      LIMIT ${limit}
+    `;
+    return results;
+  } else {
+    const results = await prisma.$queryRaw<MemoryRecord[]>`
+      SELECT id, "userId", type, content, metadata, "createdAt"
+      FROM "Memory"
+      WHERE "userId" = ${userId}
+        AND content ILIKE ${searchPattern}
+      ORDER BY "createdAt" DESC
+      LIMIT ${limit}
+    `;
+    return results;
   }
-
-  // Simple ILIKE search as fallback
-  const results = await prisma.$queryRaw<MemoryRecord[]>`
-    SELECT id, "userId", type, content, metadata, "createdAt"
-    FROM "Memory"
-    WHERE "userId" = ${userId}
-      ${type ? prisma.$queryRaw`AND type = ${type}` : prisma.$queryRaw``}
-      AND content ILIKE ${'%' + query + '%'}
-    ORDER BY "createdAt" DESC
-    LIMIT ${limit}
-  `;
-
-  return results;
 }
 
 /**

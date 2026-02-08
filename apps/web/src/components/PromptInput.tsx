@@ -35,8 +35,8 @@ export function PromptInput({
   return (
     <div className="space-y-5">
       {/* Header */}
-      <label htmlFor="prompt" className="font-serif text-lg text-[#F2F2F2] block">
-        What would you like to <em className="gold-text">automate</em>?
+      <label htmlFor="prompt" className="font-semibold text-lg text-text-primary block">
+        What would you like to <span className="accent-text">automate</span>?
       </label>
 
       {/* Input area */}
@@ -47,23 +47,23 @@ export function PromptInput({
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="e.g., Deploy staging and run smoke tests"
-          className="w-full min-h-[120px] px-5 py-4 bg-transparent border border-[#333] rounded-xl
-                     text-[#F2F2F2] placeholder:text-[#71717A] font-light
-                     focus:outline-none focus:border-[#D4AF37]
+          className="w-full min-h-[120px] px-5 py-4 bg-bg-primary border border-border-subtle rounded-xl
+                     text-text-primary placeholder:text-text-muted font-normal
+                     focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
                      resize-none transition-all duration-200"
-          style={{ caretColor: '#D4AF37' }}
+          style={{ caretColor: '#0FE3C2' }}
           disabled={disabled || isLoading}
         />
 
-        {/* Submit button - Gold */}
+        {/* Submit button */}
         <motion.button
-          whileHover={{ scale: 1.05, filter: 'brightness(1.1)' }}
+          whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => onSubmit(value)}
           disabled={!value.trim() || isLoading || disabled}
-          className="absolute bottom-4 right-4 p-3 bg-[#D4AF37] text-black rounded-lg
+          className="absolute bottom-4 right-4 p-3 bg-accent text-bg-primary rounded-lg
                      disabled:opacity-50 disabled:cursor-not-allowed
-                     transition-all duration-200"
+                     transition-all duration-200 hover:bg-accent-hover hover:shadow-glow"
         >
           {isLoading ? (
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -75,20 +75,20 @@ export function PromptInput({
 
       {/* Footer */}
       <div className="flex items-center justify-between">
-        <div className="text-xs text-[#71717A] font-mono">
+        <div className="text-xs text-text-muted font-mono">
           Press{' '}
-          <kbd className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-[#A1A1AA]">
+          <kbd className="px-1.5 py-0.5 bg-bg-elevated border border-border-subtle rounded text-text-secondary">
             Ctrl
           </kbd>
           {' + '}
-          <kbd className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-[#A1A1AA]">
+          <kbd className="px-1.5 py-0.5 bg-bg-elevated border border-border-subtle rounded text-text-secondary">
             Enter
           </kbd>
           {' '}to submit
         </div>
 
         {isLoading && (
-          <div className="flex items-center gap-2 text-sm text-[#D4AF37]">
+          <div className="flex items-center gap-2 text-sm text-accent">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span className="font-mono text-xs">Generating plan...</span>
           </div>
@@ -96,20 +96,20 @@ export function PromptInput({
       </div>
 
       {/* Example prompts */}
-      <div className="pt-4 border-t border-white/10">
-        <p className="text-xs text-[#71717A] mb-3 uppercase tracking-wider font-mono">
+      <div className="pt-4 border-t border-border-subtle">
+        <p className="text-xs text-text-muted mb-3 uppercase tracking-wider font-mono">
           Try an example
         </p>
         <div className="flex flex-wrap gap-2">
           {EXAMPLE_PROMPTS.map((prompt) => (
             <motion.button
               key={prompt}
-              whileHover={{ scale: 1.02, borderColor: 'rgba(212, 175, 55, 0.3)' }}
+              whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => onChange(prompt)}
               disabled={isLoading || disabled}
-              className="text-xs px-3 py-1.5 bg-white/5 border border-white/10 rounded-full
-                         text-[#A1A1AA] hover:text-[#F2F2F2]
+              className="text-xs px-3 py-1.5 bg-bg-elevated border border-border-subtle rounded-full
+                         text-text-secondary hover:text-text-primary hover:border-accent/30
                          transition-all duration-200 disabled:opacity-50"
             >
               {prompt}

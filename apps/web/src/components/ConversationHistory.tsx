@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useMemory, ConversationMessage } from '@/hooks/useMemory';
+import { Spinner } from '@/components/ui/spinner';
 
 interface ConversationHistoryProps {
   limit?: number;
@@ -44,14 +45,14 @@ export function ConversationHistory({
   if (loading && messages.length === 0) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="w-5 h-5 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+        <Spinner size="sm" variant="primary" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-red-400 text-sm py-4 text-center">
+      <div className="text-destructive text-sm py-4 text-center">
         {error}
       </div>
     );
@@ -59,7 +60,7 @@ export function ConversationHistory({
 
   if (messages.length === 0) {
     return (
-      <div className="text-neutral-500 text-sm py-8 text-center">
+      <div className="text-text-muted text-sm py-8 text-center">
         No conversation history yet
       </div>
     );
@@ -72,7 +73,7 @@ export function ConversationHistory({
           <button
             onClick={handleClear}
             disabled={clearing}
-            className="text-xs text-neutral-500 hover:text-red-400 transition-colors disabled:opacity-50"
+            className="text-xs text-text-muted hover:text-destructive transition-colors disabled:opacity-50"
           >
             {clearing ? 'Clearing...' : 'Clear History'}
           </button>
@@ -112,10 +113,10 @@ function MessageBubble({
       <div
         className={`max-w-[80%] rounded-lg px-4 py-2 ${
           isUser
-            ? 'bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30'
+            ? 'bg-accent/20 text-accent border border-accent/30'
             : isSystem
-            ? 'bg-neutral-800/50 text-neutral-400 italic'
-            : 'bg-neutral-800 text-neutral-200'
+            ? 'bg-bg-elevated text-text-muted italic'
+            : 'bg-bg-elevated text-text-primary'
         }`}
       >
         {/* Role indicator */}
@@ -138,17 +139,17 @@ function MessageBubble({
               <span
                 className={`inline-block px-1.5 py-0.5 rounded text-xs ${
                   message.metadata.riskLevel === 'HIGH'
-                    ? 'bg-red-500/20 text-red-400'
+                    ? 'bg-destructive/20 text-destructive'
                     : message.metadata.riskLevel === 'MEDIUM'
-                    ? 'bg-yellow-500/20 text-yellow-400'
-                    : 'bg-green-500/20 text-green-400'
+                    ? 'bg-warning/20 text-warning'
+                    : 'bg-success/20 text-success'
                 }`}
               >
                 {String(message.metadata.riskLevel)} risk
               </span>
             )}
             {message.metadata.stepCount != null && (
-              <span className="text-xs text-neutral-500 ml-2">
+              <span className="text-xs text-text-muted ml-2">
                 {String(message.metadata.stepCount)} steps
               </span>
             )}
@@ -157,7 +158,7 @@ function MessageBubble({
 
         {/* Execution link */}
         {message.executionId && (
-          <div className="mt-1 text-xs text-neutral-500">
+          <div className="mt-1 text-xs text-text-muted">
             Execution: {message.executionId.slice(0, 8)}...
           </div>
         )}

@@ -2,11 +2,12 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Loader2, Bot, Sparkles, RefreshCw } from 'lucide-react';
+import { Send, Loader2, Bot, RefreshCw } from 'lucide-react';
 import { ChatMessage, ChatMessageData } from './ChatMessage';
 import { useExecution } from '@/hooks/useExecution';
 import { useAgentsStore } from '@/store/agents';
 import { AgentSelector } from './AgentSelector';
+
 // Simple ID generator
 function generateId(): string {
   return typeof crypto !== 'undefined' && crypto.randomUUID
@@ -81,22 +82,38 @@ export function ChatInterface() {
     });
   }, [executionId, plan, results, status]);
 
-  // Add error message
+  // Handle error state - update loading message or add error message
   useEffect(() => {
-    if (error && messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
+    if (!error) return;
+
+    setMessages((prev) => {
+      if (prev.length === 0) return prev;
+
+      const lastMessage = prev[prev.length - 1];
+
+      // If last message is a loading assistant message, update it with error
       if (lastMessage.role === 'assistant' && lastMessage.isLoading) {
-        setMessages((prev) => {
-          const updated = [...prev];
-          updated[updated.length - 1] = {
-            ...updated[updated.length - 1],
-            content: `Error: ${error}`,
-            isLoading: false,
-          };
-          return updated;
-        });
+        const updated = [...prev];
+        updated[updated.length - 1] = {
+          ...updated[updated.length - 1],
+          content: `Error: ${error}`,
+          isLoading: false,
+        };
+        return updated;
       }
-    }
+
+      // Otherwise add a new error message
+      return [
+        ...prev,
+        {
+          id: generateId(),
+          role: 'assistant' as const,
+          content: `Error: ${error}`,
+          timestamp: new Date(),
+          isLoading: false,
+        },
+      ];
+    });
   }, [error]);
 
   const handleSubmit = useCallback(async () => {
@@ -174,30 +191,20 @@ export function ChatInterface() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-surface-base">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border-subtle">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-orange to-accent-gold flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="font-serif text-lg text-text-primary">Opsuna Tambo</h1>
-            <p className="text-xs text-text-muted">AI Action Orchestrator</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <AgentSelector />
-          {messages.length > 0 && (
-            <button
-              onClick={handleNewChat}
-              className="p-2 hover:bg-surface-elevated rounded-lg transition-colors"
-              title="New chat"
-            >
-              <RefreshCw className="w-4 h-4 text-text-muted" />
-            </button>
-          )}
-        </div>
+    <div className="flex flex-col h-full bg-bg-primary">
+      {/* Compact Toolbar */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle bg-bg-surface/30">
+        <AgentSelector />
+        {messages.length > 0 && (
+          <button
+            onClick={handleNewChat}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-text-muted hover:text-text-primary hover:bg-bg-elevated rounded-lg transition-all active:scale-95"
+            title="New chat"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span className="hidden sm:inline">New Chat</span>
+          </button>
+        )}
       </div>
 
       {/* Messages */}
@@ -220,7 +227,7 @@ export function ChatInterface() {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-border-subtle bg-surface-elevated">
+      <div className="p-4 border-t border-border-subtle bg-bg-elevated">
         <div className="flex items-end gap-3">
           <div className="flex-1 relative">
             <textarea
@@ -231,11 +238,11 @@ export function ChatInterface() {
               placeholder="Describe what you want to do..."
               disabled={isLoading}
               rows={1}
-              className="w-full px-4 py-3 bg-surface-base border border-border-subtle rounded-xl
+              className="w-full px-4 py-3 bg-bg-primary border border-border-subtle rounded-xl
                          text-text-primary placeholder:text-text-muted resize-none
-                         focus:outline-none focus:ring-2 focus:ring-accent-orange/50 focus:border-accent-orange
+                         focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent
                          disabled:opacity-50 disabled:cursor-not-allowed
-                         min-h-[48px] max-h-[200px]"
+                         min-h-[48px] max-h-[200px] transition-all"
               style={{ height: 'auto' }}
               onInput={(e) => {
                 const target = e.target as HTMLTextAreaElement;
@@ -247,8 +254,9 @@ export function ChatInterface() {
           <button
             onClick={handleSubmit}
             disabled={!input.trim() || isLoading}
-            className="p-3 bg-accent-orange hover:bg-accent-orange/90 disabled:bg-accent-orange/50
-                       rounded-xl text-white transition-colors disabled:cursor-not-allowed"
+            className="p-3 bg-accent hover:bg-accent-hover disabled:opacity-50
+                       rounded-xl text-bg-primary transition-all disabled:cursor-not-allowed
+                       hover:shadow-glow active:scale-95"
           >
             {isLoading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -275,10 +283,10 @@ function EmptyState({ onExampleClick }: { onExampleClick: (text: string) => void
 
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-4">
-      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent-orange/20 to-accent-gold/20 flex items-center justify-center mb-6">
-        <Bot className="w-8 h-8 text-accent-orange" />
+      <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mb-6">
+        <Bot className="w-8 h-8 text-accent" />
       </div>
-      <h2 className="font-serif text-xl text-text-primary mb-2">
+      <h2 className="font-semibold text-xl text-text-primary mb-2">
         What would you like to do?
       </h2>
       <p className="text-text-muted text-sm mb-8 max-w-md">
@@ -290,10 +298,10 @@ function EmptyState({ onExampleClick }: { onExampleClick: (text: string) => void
           <button
             key={index}
             onClick={() => onExampleClick(example)}
-            className="text-left px-4 py-3 bg-surface-elevated hover:bg-surface-base
-                       border border-border-subtle hover:border-accent-orange/30
+            className="text-left px-4 py-3 bg-bg-elevated hover:bg-bg-surface
+                       border border-border-subtle hover:border-accent/30
                        rounded-lg text-sm text-text-secondary hover:text-text-primary
-                       transition-colors"
+                       transition-all"
           >
             {example}
           </button>

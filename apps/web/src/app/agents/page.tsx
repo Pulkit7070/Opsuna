@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { Bot, Plus, Sparkles, ArrowLeft } from 'lucide-react';
+import { Bot, Plus, Sparkles } from 'lucide-react';
 import { useAgents, Agent } from '@/hooks/useAgents';
 import { useAgentsStore } from '@/store/agents';
 import { AgentCard } from '@/components/AgentCard';
+import { Spinner } from '@/components/ui/spinner';
+import { Navigation } from '@/components/Navigation';
 import Link from 'next/link';
 
 export default function AgentsPage() {
@@ -27,43 +29,35 @@ export default function AgentsPage() {
     : agents;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950">
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-neutral-400 hover:text-neutral-200 transition-colors mb-4"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </Link>
+    <div className="min-h-screen bg-bg-primary">
+      <Navigation />
 
-          <div className="flex items-start justify-between">
+      <div className="max-w-6xl mx-auto px-4 md:px-6 py-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-accent/20 rounded-xl">
+              <Bot className="w-6 h-6 text-accent" />
+            </div>
             <div>
-              <h1 className="text-3xl font-bold text-neutral-100 flex items-center gap-3">
-                <div className="p-3 bg-[#D4AF37]/20 rounded-xl">
-                  <Bot className="w-8 h-8 text-[#D4AF37]" />
-                </div>
-                AI Agents
-              </h1>
-              <p className="text-neutral-400 mt-2">
-                Choose a specialized agent to help with your tasks
+              <h1 className="text-2xl font-bold text-text-primary">AI Agents</h1>
+              <p className="text-sm text-text-secondary">
+                Choose a specialized agent for your tasks
               </p>
             </div>
-
-            <Link
-              href="/agents/new"
-              className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37] text-neutral-900 rounded-lg hover:bg-[#D4AF37]/90 transition-colors font-medium"
-            >
-              <Plus className="w-4 h-4" />
-              Create Agent
-            </Link>
           </div>
+
+          <Link
+            href="/agents/new"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-accent text-bg-primary rounded-lg hover:bg-accent-hover transition-all font-medium hover:shadow-glow active:scale-95"
+          >
+            <Plus className="w-4 h-4" />
+            Create Agent
+          </Link>
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-2 mb-6 border-b border-neutral-800">
+        <div className="flex items-center gap-1 mb-6 border-b border-border-subtle overflow-x-auto">
           {[
             { id: 'all', label: 'All Agents', count: agents.length },
             { id: 'builtin', label: 'Built-in', count: builtinAgents.length },
@@ -72,25 +66,25 @@ export default function AgentsPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as 'all' | 'builtin' | 'custom')}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors relative ${
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors relative whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'text-[#D4AF37]'
-                  : 'text-neutral-400 hover:text-neutral-200'
+                  ? 'text-accent'
+                  : 'text-text-muted hover:text-text-primary'
               }`}
             >
               {tab.id === 'builtin' && <Sparkles className="w-4 h-4" />}
               {tab.label}
               <span className={`px-1.5 py-0.5 text-xs rounded-full ${
                 activeTab === tab.id
-                  ? 'bg-[#D4AF37]/20 text-[#D4AF37]'
-                  : 'bg-neutral-800 text-neutral-500'
+                  ? 'bg-accent/20 text-accent'
+                  : 'bg-bg-elevated text-text-muted'
               }`}>
                 {tab.count}
               </span>
               {activeTab === tab.id && (
                 <motion.div
                   layoutId="activeTab"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#D4AF37]"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent"
                 />
               )}
             </button>
@@ -100,30 +94,39 @@ export default function AgentsPage() {
         {/* Content */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+            <Spinner size="lg" variant="primary" />
           </div>
         ) : error ? (
           <div className="text-center py-20">
-            <p className="text-red-400">{error}</p>
+            <p className="text-destructive">{error}</p>
           </div>
         ) : filteredAgents.length === 0 ? (
-          <div className="text-center py-20">
-            <Bot className="w-16 h-16 text-neutral-700 mx-auto mb-4" />
-            <p className="text-neutral-500">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-20"
+          >
+            <div className="w-20 h-20 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-6">
+              <Bot className="w-10 h-10 text-accent" />
+            </div>
+            <h3 className="text-xl font-semibold text-text-primary mb-2">
+              {activeTab === 'custom' ? 'No custom agents yet' : 'No agents available'}
+            </h3>
+            <p className="text-text-muted mb-6">
               {activeTab === 'custom'
-                ? 'No custom agents yet. Create your first agent!'
-                : 'No agents available'}
+                ? 'Create your first custom agent to get started'
+                : 'Agents will appear here'}
             </p>
             {activeTab === 'custom' && (
               <Link
                 href="/agents/new"
-                className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-[#D4AF37]/20 text-[#D4AF37] rounded-lg hover:bg-[#D4AF37]/30 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-bg-primary rounded-lg hover:bg-accent-hover transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Create Agent
               </Link>
             )}
-          </div>
+          </motion.div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredAgents.map((agent) => (

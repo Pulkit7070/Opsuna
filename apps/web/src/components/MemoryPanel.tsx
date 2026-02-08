@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMemory, MemoryRecord, ToolPattern } from '@/hooks/useMemory';
+import { Spinner } from '@/components/ui/spinner';
 
 interface MemoryPanelProps {
   query?: string;
@@ -36,12 +37,12 @@ export function MemoryPanel({ query, isVisible = true, onClose }: MemoryPanelPro
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
-        className="bg-neutral-900/80 backdrop-blur-sm border border-[#D4AF37]/20 rounded-lg p-4 mb-4"
+        className="bg-bg-surface/80 backdrop-blur-sm border border-accent/20 rounded-lg p-4 mb-4"
       >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <svg
-              className="w-4 h-4 text-[#D4AF37]"
+              className="w-4 h-4 text-accent"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -53,12 +54,12 @@ export function MemoryPanel({ query, isVisible = true, onClose }: MemoryPanelPro
                 d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
               />
             </svg>
-            <span className="text-sm font-medium text-[#D4AF37]">AI Memory Context</span>
+            <span className="text-sm font-medium text-accent">AI Memory Context</span>
           </div>
           {onClose && (
             <button
               onClick={onClose}
-              className="text-neutral-500 hover:text-neutral-300 transition-colors"
+              className="text-text-muted hover:text-text-secondary transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -68,8 +69,8 @@ export function MemoryPanel({ query, isVisible = true, onClose }: MemoryPanelPro
         </div>
 
         {loading && (
-          <div className="flex items-center gap-2 text-neutral-400 text-sm">
-            <div className="w-3 h-3 border border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+          <div className="flex items-center gap-2 text-text-muted text-sm">
+            <Spinner size="xs" variant="primary" />
             <span>Loading memories...</span>
           </div>
         )}
@@ -79,7 +80,7 @@ export function MemoryPanel({ query, isVisible = true, onClose }: MemoryPanelPro
             {/* Relevant Past Executions */}
             {relevantMemories.length > 0 && (
               <div>
-                <h4 className="text-xs font-medium text-neutral-400 uppercase tracking-wide mb-2">
+                <h4 className="text-xs font-medium text-text-muted uppercase tracking-wide mb-2">
                   Relevant Past Executions
                 </h4>
                 <div className="space-y-2">
@@ -93,7 +94,7 @@ export function MemoryPanel({ query, isVisible = true, onClose }: MemoryPanelPro
             {/* Tool Patterns */}
             {patterns.length > 0 && (
               <div>
-                <h4 className="text-xs font-medium text-neutral-400 uppercase tracking-wide mb-2">
+                <h4 className="text-xs font-medium text-text-muted uppercase tracking-wide mb-2">
                   Tool Usage Patterns
                 </h4>
                 <div className="flex flex-wrap gap-2">
@@ -116,16 +117,16 @@ function MemoryCard({ memory }: { memory: MemoryRecord }) {
     : null;
 
   return (
-    <div className="bg-neutral-800/50 rounded p-2 text-sm">
+    <div className="bg-bg-elevated rounded p-2 text-sm">
       <div className="flex items-start justify-between gap-2">
-        <p className="text-neutral-300 line-clamp-2">{memory.content}</p>
+        <p className="text-text-secondary line-clamp-2">{memory.content}</p>
         {similarityPercent && (
-          <span className="text-xs text-[#D4AF37] whitespace-nowrap">
+          <span className="text-xs text-accent whitespace-nowrap">
             {similarityPercent}% match
           </span>
         )}
       </div>
-      <div className="flex items-center gap-2 mt-1 text-xs text-neutral-500">
+      <div className="flex items-center gap-2 mt-1 text-xs text-text-muted">
         <span>{new Date(memory.createdAt).toLocaleDateString()}</span>
         <span className="capitalize">{memory.type}</span>
       </div>
@@ -138,20 +139,20 @@ function PatternBadge({ pattern }: { pattern: ToolPattern }) {
   const total = pattern.successCount + pattern.failureCount;
 
   return (
-    <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-neutral-800/50 rounded text-xs">
-      <span className="text-neutral-300">{pattern.toolName}</span>
+    <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-bg-elevated rounded text-xs">
+      <span className="text-text-secondary">{pattern.toolName}</span>
       <span
         className={`font-medium ${
           successRate >= 80
-            ? 'text-green-400'
+            ? 'text-success'
             : successRate >= 50
-            ? 'text-yellow-400'
-            : 'text-red-400'
+            ? 'text-warning'
+            : 'text-destructive'
         }`}
       >
         {successRate}%
       </span>
-      <span className="text-neutral-500">({total})</span>
+      <span className="text-text-muted">({total})</span>
     </div>
   );
 }

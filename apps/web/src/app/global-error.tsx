@@ -16,8 +16,8 @@ export default function GlobalError({
   return (
     <html>
       <body style={{
-        backgroundColor: '#0a0a0a',
-        color: '#ffffff',
+        backgroundColor: '#0B0F12',
+        color: '#F5F7FA',
         fontFamily: 'system-ui, sans-serif',
         minHeight: '100vh',
         display: 'flex',
@@ -41,7 +41,7 @@ export default function GlobalError({
             Something went wrong
           </h1>
           <p style={{
-            color: '#888',
+            color: '#9FB0C0',
             marginBottom: '1.5rem'
           }}>
             {error.message || 'An unexpected error occurred'}
@@ -49,8 +49,8 @@ export default function GlobalError({
           <button
             onClick={reset}
             style={{
-              backgroundColor: '#D4AF37',
-              color: '#000',
+              backgroundColor: '#0FE3C2',
+              color: '#0B0F12',
               border: 'none',
               padding: '0.75rem 1.5rem',
               borderRadius: '0.5rem',

@@ -5,19 +5,57 @@ import { useExecutionStore } from '@/store/execution';
 import { createClient } from '@/lib/supabase/client';
 
 const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001/ws';
+const RECONNECT_DELAY = 3000;
+const MAX_RECONNECT_ATTEMPTS = 5;
 
 export function useWebSocket() {
   const wsRef = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttemptsRef = useRef(0);
   const subscribedExecutionRef = useRef<string | null>(null);
+  const isConnectingRef = useRef(false);
 
   const { updateStatus, addLog, addUIMessage, updateStepResult } = useExecutionStore();
 
-  const connect = useCallback(async () => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
+  // Use ref for message handler to avoid circular dependency
+  const handleMessageRef = useRef<(message: { type: string; payload: unknown }) => void>();
+
+  const clearReconnectTimeout = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+  }, []);
+
+  // Use ref for connect to avoid circular dependency in scheduleReconnect
+  const connectRef = useRef<() => Promise<void>>();
+
+  const scheduleReconnect = useCallback(() => {
+    clearReconnectTimeout();
+
+    if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
+      console.warn('[WebSocket] Max reconnect attempts reached');
       return;
     }
+
+    const delay = RECONNECT_DELAY * Math.pow(1.5, reconnectAttemptsRef.current);
+    console.log(`[WebSocket] Reconnecting in ${delay / 1000}s (attempt ${reconnectAttemptsRef.current + 1}/${MAX_RECONNECT_ATTEMPTS})`);
+
+    reconnectTimeoutRef.current = setTimeout(() => {
+      reconnectAttemptsRef.current++;
+      connectRef.current?.();
+    }, delay);
+  }, [clearReconnectTimeout]);
+
+  const connect = useCallback(async () => {
+    // Prevent multiple simultaneous connection attempts
+    if (isConnectingRef.current || wsRef.current?.readyState === WebSocket.OPEN) {
+      return;
+    }
+
+    isConnectingRef.current = true;
+    clearReconnectTimeout();
 
     try {
       // Get auth token for WebSocket connection
@@ -37,6 +75,8 @@ export function useWebSocket() {
       ws.onopen = () => {
         console.log('[WebSocket] Connected');
         setIsConnected(true);
+        reconnectAttemptsRef.current = 0; // Reset on successful connection
+        isConnectingRef.current = false;
 
         // Re-subscribe if we have an execution
         if (subscribedExecutionRef.current) {
@@ -50,32 +90,37 @@ export function useWebSocket() {
       ws.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
-          handleMessage(message);
+          handleMessageRef.current?.(message);
         } catch (err) {
           console.error('[WebSocket] Failed to parse message:', err);
         }
       };
 
-      ws.onclose = () => {
-        console.log('[WebSocket] Disconnected');
+      ws.onclose = (event) => {
+        console.log('[WebSocket] Disconnected', event.code, event.reason);
         setIsConnected(false);
+        isConnectingRef.current = false;
+        wsRef.current = null;
 
-        // Attempt to reconnect after 3 seconds
-        reconnectTimeoutRef.current = setTimeout(() => {
-          console.log('[WebSocket] Attempting to reconnect...');
-          connect();
-        }, 3000);
+        // Only reconnect if not a clean close (code 1000)
+        if (event.code !== 1000) {
+          scheduleReconnect();
+        }
       };
 
       ws.onerror = (error) => {
         console.error('[WebSocket] Error:', error);
+        isConnectingRef.current = false;
+        // Error will trigger onclose, which handles reconnection
       };
 
       wsRef.current = ws;
     } catch (err) {
       console.error('[WebSocket] Failed to connect:', err);
+      isConnectingRef.current = false;
+      scheduleReconnect();
     }
-  }, []);
+  }, [clearReconnectTimeout, scheduleReconnect]);
 
   const handleMessage = useCallback((message: { type: string; payload: unknown }) => {
     switch (message.type) {
@@ -153,15 +198,25 @@ export function useWebSocket() {
   }, []);
 
   const disconnect = useCallback(() => {
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-    }
+    clearReconnectTimeout();
+    reconnectAttemptsRef.current = 0;
+    isConnectingRef.current = false;
+
     if (wsRef.current) {
-      wsRef.current.close();
+      wsRef.current.close(1000, 'Client disconnect'); // Clean close
       wsRef.current = null;
     }
     setIsConnected(false);
-  }, []);
+  }, [clearReconnectTimeout]);
+
+  // Keep refs in sync with their callbacks
+  useEffect(() => {
+    handleMessageRef.current = handleMessage;
+  }, [handleMessage]);
+
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   useEffect(() => {
     connect();

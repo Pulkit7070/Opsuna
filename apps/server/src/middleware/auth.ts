@@ -11,6 +11,27 @@ const MOCK_USER = {
   avatarUrl: null as string | null,
 };
 
+// User upsert cache to reduce DB writes (5-minute TTL)
+const USER_CACHE_TTL_MS = 5 * 60 * 1000;
+const userUpsertCache = new Map<string, { timestamp: number; hash: string }>();
+
+function getUserHash(user: { email: string; name: string | null; avatarUrl: string | null }): string {
+  return `${user.email}|${user.name || ''}|${user.avatarUrl || ''}`;
+}
+
+function shouldUpsertUser(userId: string, currentHash: string): boolean {
+  const cached = userUpsertCache.get(userId);
+  if (!cached) return true;
+
+  // Check if cache expired
+  if (Date.now() - cached.timestamp > USER_CACHE_TTL_MS) {
+    return true;
+  }
+
+  // Check if user data changed
+  return cached.hash !== currentHash;
+}
+
 interface AuthUser {
   id: string;
   email: string;
@@ -72,23 +93,28 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
       });
     }
 
-    // Upsert user in our database on every authenticated request
-    console.log(`[Auth] Upserting user: ${supabaseUser.id} (${supabaseUser.email})`);
-    await prisma.user.upsert({
-      where: { id: supabaseUser.id },
-      update: {
-        email: supabaseUser.email,
-        name: supabaseUser.name,
-        avatarUrl: supabaseUser.avatarUrl,
-      },
-      create: {
-        id: supabaseUser.id,
-        email: supabaseUser.email,
-        name: supabaseUser.name,
-        avatarUrl: supabaseUser.avatarUrl,
-      },
-    });
-    console.log(`[Auth] User upsert successful for: ${supabaseUser.id}`);
+    // Check if we need to upsert (cached with 5-min TTL to reduce DB writes)
+    const userHash = getUserHash(supabaseUser);
+    if (shouldUpsertUser(supabaseUser.id, userHash)) {
+      console.log(`[Auth] Upserting user: ${supabaseUser.id} (${supabaseUser.email})`);
+      await prisma.user.upsert({
+        where: { id: supabaseUser.id },
+        update: {
+          email: supabaseUser.email,
+          name: supabaseUser.name,
+          avatarUrl: supabaseUser.avatarUrl,
+        },
+        create: {
+          id: supabaseUser.id,
+          email: supabaseUser.email,
+          name: supabaseUser.name,
+          avatarUrl: supabaseUser.avatarUrl,
+        },
+      });
+      // Update cache
+      userUpsertCache.set(supabaseUser.id, { timestamp: Date.now(), hash: userHash });
+      console.log(`[Auth] User upsert successful for: ${supabaseUser.id}`);
+    }
 
     req.user = supabaseUser;
     next();

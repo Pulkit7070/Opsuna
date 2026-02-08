@@ -49,10 +49,10 @@ export function ExecutionPanel({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-card p-12 text-center"
+        className="card p-12 text-center"
       >
-        <Sparkles className="h-10 w-10 text-accent-orange mx-auto mb-4 opacity-50" />
-        <p className="text-text-muted font-serif">
+        <Sparkles className="h-10 w-10 text-accent mx-auto mb-4 opacity-50" />
+        <p className="text-text-muted">
           Enter a prompt above to generate an execution plan
         </p>
       </motion.div>
@@ -79,8 +79,8 @@ export function ExecutionPanel({
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={onReset}
-            className="px-4 py-2 bg-surface-base border border-border-subtle rounded-lg
-                       text-text-secondary hover:text-text-primary hover:border-accent-orange/30
+            className="px-4 py-2 bg-bg-primary border border-border-subtle rounded-lg
+                       text-text-secondary hover:text-text-primary hover:border-accent/30
                        transition-all flex items-center gap-2 text-sm"
           >
             <RefreshCw className="h-4 w-4" />

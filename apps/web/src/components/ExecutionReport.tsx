@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { FileText, Download, Share2, Copy, Check, RefreshCw } from 'lucide-react';
 import { useArtifacts } from '@/hooks/useArtifacts';
+import { Spinner } from '@/components/ui/spinner';
 
 interface ExecutionReportProps {
   executionId: string;
@@ -58,7 +59,7 @@ export function ExecutionReport({ executionId, onShare }: ExecutionReportProps) 
   if (loadingReport || loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="w-6 h-6 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+        <Spinner size="md" variant="primary" />
       </div>
     );
   }
@@ -66,11 +67,11 @@ export function ExecutionReport({ executionId, onShare }: ExecutionReportProps) 
   if (error && !content) {
     return (
       <div className="flex flex-col items-center justify-center py-12 space-y-4">
-        <FileText className="w-12 h-12 text-red-400" />
-        <p className="text-red-400 text-sm">{error}</p>
+        <FileText className="w-12 h-12 text-destructive" />
+        <p className="text-destructive text-sm">{error}</p>
         <button
           onClick={loadReport}
-          className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37]/20 text-[#D4AF37] rounded-lg hover:bg-[#D4AF37]/30 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-accent/20 text-accent rounded-lg hover:bg-accent/30 transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Retry
@@ -82,11 +83,11 @@ export function ExecutionReport({ executionId, onShare }: ExecutionReportProps) 
   if (!content) {
     return (
       <div className="flex flex-col items-center justify-center py-12 space-y-4">
-        <FileText className="w-12 h-12 text-neutral-600" />
-        <p className="text-neutral-500">No report available</p>
+        <FileText className="w-12 h-12 text-text-muted" />
+        <p className="text-text-muted">No report available</p>
         <button
           onClick={loadReport}
-          className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37]/20 text-[#D4AF37] rounded-lg hover:bg-[#D4AF37]/30 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-accent/20 text-accent rounded-lg hover:bg-accent/30 transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Generate Report
@@ -101,14 +102,14 @@ export function ExecutionReport({ executionId, onShare }: ExecutionReportProps) 
       <div className="flex items-center justify-end gap-2">
         <button
           onClick={handleCopy}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-400 hover:text-neutral-200 transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 text-sm text-text-muted hover:text-text-primary transition-colors"
         >
           {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
           {copied ? 'Copied' : 'Copy'}
         </button>
         <button
           onClick={handleDownload}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-400 hover:text-neutral-200 transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 text-sm text-text-muted hover:text-text-primary transition-colors"
         >
           <Download className="w-4 h-4" />
           Download
@@ -116,7 +117,7 @@ export function ExecutionReport({ executionId, onShare }: ExecutionReportProps) 
         {onShare && (
           <button
             onClick={onShare}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-[#D4AF37]/20 text-[#D4AF37] rounded-lg hover:bg-[#D4AF37]/30 transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-accent/20 text-accent rounded-lg hover:bg-accent/30 transition-colors"
           >
             <Share2 className="w-4 h-4" />
             Share
@@ -125,7 +126,7 @@ export function ExecutionReport({ executionId, onShare }: ExecutionReportProps) 
       </div>
 
       {/* Markdown Content */}
-      <div className="prose prose-invert prose-sm max-w-none p-6 bg-neutral-800/50 rounded-lg border border-neutral-700/50">
+      <div className="prose prose-invert prose-sm max-w-none p-6 bg-bg-elevated rounded-lg border border-border-subtle">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {content}
         </ReactMarkdown>

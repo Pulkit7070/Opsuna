@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { Search, BarChart3, Server, Bot, Sparkles, Wrench } from 'lucide-react';
 import { Agent } from '@/hooks/useAgents';
+import { Badge } from '@/components/ui/badge';
 
 interface AgentCardProps {
   agent: Agent;
@@ -46,38 +47,38 @@ export function AgentCard({ agent, isSelected, onSelect, onUse }: AgentCardProps
       onClick={() => onSelect?.(agent)}
       className={`p-5 rounded-xl border cursor-pointer transition-all ${
         isSelected
-          ? 'bg-[#D4AF37]/10 border-[#D4AF37]/50 shadow-lg shadow-[#D4AF37]/10'
-          : 'bg-neutral-900/50 border-neutral-800 hover:border-neutral-700'
+          ? 'bg-accent/10 border-accent/50 shadow-lg shadow-accent/10'
+          : 'bg-bg-surface border-border-subtle hover:border-border-highlight'
       }`}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className={`p-3 rounded-xl ${
-          isSelected ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'bg-neutral-800 text-neutral-400'
+          isSelected ? 'bg-accent/20 text-accent' : 'bg-bg-elevated text-text-muted'
         }`}>
           {getIcon(agent.icon)}
         </div>
         {agent.isBuiltin && (
-          <span className="flex items-center gap-1 px-2 py-1 text-xs bg-[#D4AF37]/20 text-[#D4AF37] rounded-full">
+          <Badge variant="default" size="sm">
             <Sparkles className="w-3 h-3" />
             Built-in
-          </span>
+          </Badge>
         )}
       </div>
 
       {/* Content */}
-      <h3 className="text-lg font-medium text-neutral-200 mb-2">{agent.name}</h3>
-      <p className="text-sm text-neutral-400 mb-4 line-clamp-2">{agent.description}</p>
+      <h3 className="text-lg font-medium text-text-primary mb-2">{agent.name}</h3>
+      <p className="text-sm text-text-secondary mb-4 line-clamp-2">{agent.description}</p>
 
       {/* Meta */}
       <div className="flex items-center gap-2 mb-4">
-        <span className="flex items-center gap-1 px-2 py-1 text-xs bg-neutral-800 text-neutral-400 rounded-full">
+        <Badge variant="secondary" size="sm">
           <Wrench className="w-3 h-3" />
           {agent.toolNames.length || 'All'} tools
-        </span>
-        <span className="px-2 py-1 text-xs bg-neutral-800 text-neutral-400 rounded-full">
+        </Badge>
+        <Badge variant="secondary" size="sm">
           {getMemoryScopeLabel(agent.memoryScope)}
-        </span>
+        </Badge>
       </div>
 
       {/* Action */}
@@ -87,7 +88,8 @@ export function AgentCard({ agent, isSelected, onSelect, onUse }: AgentCardProps
             e.stopPropagation();
             onUse(agent);
           }}
-          className="w-full py-2 bg-[#D4AF37]/20 text-[#D4AF37] rounded-lg hover:bg-[#D4AF37]/30 transition-colors text-sm font-medium"
+          className="w-full py-2 bg-accent/10 text-accent rounded-lg hover:bg-accent/20
+                     transition-colors text-sm font-medium border border-accent/20 hover:border-accent/40"
         >
           Use Agent
         </button>

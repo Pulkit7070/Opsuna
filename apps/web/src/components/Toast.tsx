@@ -34,31 +34,31 @@ function Toast({ toast, onDismiss }: ToastProps) {
   const config = {
     success: {
       icon: CheckCircle2,
-      bg: 'bg-green-500/10',
-      border: 'border-green-500/30',
-      iconColor: 'text-green-400',
-      titleColor: 'text-green-300',
+      bg: 'bg-success/10',
+      border: 'border-success/30',
+      iconColor: 'text-success',
+      titleColor: 'text-success',
     },
     error: {
       icon: XCircle,
-      bg: 'bg-red-500/10',
-      border: 'border-red-500/30',
-      iconColor: 'text-red-400',
-      titleColor: 'text-red-300',
+      bg: 'bg-destructive/10',
+      border: 'border-destructive/30',
+      iconColor: 'text-destructive',
+      titleColor: 'text-destructive',
     },
     warning: {
       icon: AlertTriangle,
-      bg: 'bg-yellow-500/10',
-      border: 'border-yellow-500/30',
-      iconColor: 'text-yellow-400',
-      titleColor: 'text-yellow-300',
+      bg: 'bg-warning/10',
+      border: 'border-warning/30',
+      iconColor: 'text-warning',
+      titleColor: 'text-warning',
     },
     info: {
       icon: Info,
-      bg: 'bg-blue-500/10',
-      border: 'border-blue-500/30',
-      iconColor: 'text-blue-400',
-      titleColor: 'text-blue-300',
+      bg: 'bg-info/10',
+      border: 'border-info/30',
+      iconColor: 'text-info',
+      titleColor: 'text-info',
     },
   };
 
@@ -77,7 +77,7 @@ function Toast({ toast, onDismiss }: ToastProps) {
       <div className="flex gap-3">
         <Icon className={cn('h-5 w-5 flex-shrink-0', iconColor)} />
         <div className="flex-1 min-w-0">
-          <p className={cn('font-serif font-medium', titleColor)}>{toast.title}</p>
+          <p className={cn('font-medium', titleColor)}>{toast.title}</p>
           {toast.message && (
             <p className="text-sm text-text-secondary mt-1">{toast.message}</p>
           )}

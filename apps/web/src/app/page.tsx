@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { useExecution } from '@/hooks/useExecution';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useLogs } from '@/store/execution';
@@ -9,11 +9,24 @@ import { PromptInput } from '@/components/PromptInput';
 import { ExecutionPanel } from '@/components/ExecutionPanel';
 import { HistoryList } from '@/components/HistoryList';
 import { ToastContainer } from '@/components/Toast';
-import { Zap, Command, ChevronDown, ChevronUp, Terminal, Sparkles } from 'lucide-react';
+import {
+  ChevronDown,
+  Zap,
+  Shield,
+  Clock,
+  ArrowRight,
+  Terminal,
+  GitBranch,
+  MessageSquare,
+  RotateCcw,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTools } from '@/hooks/useTools';
 import { AgentSelector } from '@/components/AgentSelector';
+import { Badge } from '@/components/ui/badge';
+import { CTASection } from '@/components/ui/hero-dithering-card';
+import { AnimatedBadge } from '@/components/ui/animated-badge';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/' },
@@ -23,75 +36,215 @@ const NAV_ITEMS = [
   { label: 'Tools', href: '/tools' },
 ];
 
-const FAQ_ITEMS = [
+const FEATURES = [
   {
-    question: 'What is Opsuna?',
-    answer: 'Opsuna is an AI-powered toolchain composer that transforms natural language into executable action chains with comprehensive safety mechanisms.',
+    title: 'Deployment Automation',
+    description: 'Push to staging or production with full preview. See exactly what will happen before it happens.',
+    gradient: 'from-accent/20 to-transparent',
   },
   {
-    question: 'How does the preview system work?',
-    answer: 'Every action is previewed before execution. You see exactly what will happen, assess the risk level, and approve or modify the plan before anything runs.',
+    title: 'Integrated Testing',
+    description: 'Run smoke tests, integration suites, and get instant feedback with detailed failure analysis.',
+    gradient: 'from-success/20 to-transparent',
   },
   {
-    question: 'What tools can I orchestrate?',
-    answer: 'Deploy services, run tests, create PRs, send notifications, manage infrastructure, and more. Tools are extensible through the MCP protocol.',
+    title: 'Team Notifications',
+    description: 'Slack messages, GitHub issues, email alerts—all orchestrated automatically from your commands.',
+    gradient: 'from-warning/20 to-transparent',
   },
   {
-    question: 'Is it safe for production?',
-    answer: 'Yes. All high-risk actions require explicit confirmation. Every execution is logged, auditable, and reversible where possible.',
+    title: 'Safe Rollbacks',
+    description: 'Something went wrong? One-click rollback with complete audit trail and state restoration.',
+    gradient: 'from-destructive/20 to-transparent',
   },
 ];
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2,
-    },
+const FAQ_ITEMS = [
+  {
+    question: 'What is Opsuna Tambo?',
+    answer: 'Opsuna is an AI-powered toolchain composer that transforms natural language into executable action chains. Think of it as having a senior DevOps engineer who never sleeps, never makes typos, and always asks for confirmation before doing anything risky.',
   },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20, filter: 'blur(5px)' },
-  visible: {
-    opacity: 1,
-    y: 0,
-    filter: 'blur(0px)',
-    transition: { duration: 0.5, ease: 'easeOut' as const },
+  {
+    question: 'How does the preview system work?',
+    answer: 'Every action is previewed before execution. You see exactly what will happen—which APIs will be called, what data will be sent, what the expected outcome is. You assess the risk level and approve or modify the plan before anything runs.',
   },
-};
+  {
+    question: 'What can I automate?',
+    answer: 'Deploy services, run tests, create pull requests, send notifications, manage infrastructure, query databases, generate reports—anything you can do with an API, Opsuna can orchestrate. Tools are extensible through the MCP protocol.',
+  },
+  {
+    question: 'Is it safe for production use?',
+    answer: 'Absolutely. High-risk actions require explicit typed confirmation. Every execution is logged with full audit trails. Actions are reversible where possible. Intent tokens expire in 5 minutes to prevent stale confirmations.',
+  },
+];
 
-function FAQItem({ question, answer }: { question: string; answer: string }) {
+const STATS = [
+  { value: '98%', label: 'Success Rate' },
+  { value: '5min', label: 'Avg. Saved per Task' },
+  { value: '300+', label: 'Tools Available' },
+];
+
+
+function HeroSection({ stats }: { stats: { value: string; label: string }[] }) {
+  return (
+    <section className="py-8 md:py-12 w-full flex justify-center items-center px-4 md:px-6">
+      <div className="w-full max-w-7xl relative group">
+        <div className="relative overflow-hidden rounded-[32px] md:rounded-[48px] border border-border-subtle bg-bg-surface shadow-lg min-h-[550px] md:min-h-[650px] flex flex-col items-center justify-center">
+          {/* Animated gradient background - CSS only, no shader */}
+          <div className="absolute inset-0 z-0 overflow-hidden">
+            {/* Primary glow */}
+            <motion.div
+              className="absolute -top-1/4 -left-1/4 w-3/4 h-3/4 rounded-full blur-[100px] opacity-30"
+              style={{ background: 'radial-gradient(circle, #0FE3C2 0%, transparent 70%)' }}
+              animate={{
+                x: [0, 50, 0],
+                y: [0, 30, 0],
+                scale: [1, 1.1, 1],
+              }}
+              transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            {/* Secondary glow */}
+            <motion.div
+              className="absolute -bottom-1/4 -right-1/4 w-3/4 h-3/4 rounded-full blur-[100px] opacity-20"
+              style={{ background: 'radial-gradient(circle, #0FE3C2 0%, transparent 70%)' }}
+              animate={{
+                x: [0, -40, 0],
+                y: [0, -20, 0],
+                scale: [1.1, 1, 1.1],
+              }}
+              transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            {/* Grid pattern */}
+            <div
+              className="absolute inset-0 opacity-[0.03]"
+              style={{
+                backgroundImage: `
+                  linear-gradient(rgba(15, 227, 194, 0.5) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(15, 227, 194, 0.5) 1px, transparent 1px)
+                `,
+                backgroundSize: '50px 50px',
+              }}
+            />
+          </div>
+
+          {/* Gradient overlays for depth */}
+          <div className="absolute inset-0 z-[1] bg-gradient-to-t from-bg-surface via-transparent to-bg-surface/50 pointer-events-none" />
+          <div className="absolute inset-0 z-[1] bg-gradient-to-b from-bg-surface/80 via-transparent to-transparent pointer-events-none" />
+
+          {/* Content */}
+          <div className="relative z-10 px-6 md:px-12 max-w-4xl mx-auto text-center flex flex-col items-center">
+            {/* Animated Badge */}
+            <div className="mb-8">
+              <AnimatedBadge
+                text="AI-Powered DevOps Automation"
+                color="#0FE3C2"
+                href="/chat"
+              />
+            </div>
+
+            {/* Headline */}
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-text-primary mb-6 leading-[1.08]"
+            >
+              Describe your task.
+              <br />
+              <span className="text-text-primary/70">We execute it safely.</span>
+            </motion.h1>
+
+            {/* Description */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-text-secondary text-lg md:text-xl max-w-2xl mb-10 leading-relaxed"
+            >
+              Transform natural language into reviewable, reversible action chains.
+              Every command previewed. Every action auditable.
+            </motion.p>
+
+            {/* CTA Button */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              <Link
+                href="/chat"
+                className="group relative inline-flex h-14 items-center justify-center gap-3 overflow-hidden rounded-full bg-accent px-10 md:px-12 text-base font-semibold text-bg-primary transition-all duration-300 hover:bg-accent-hover hover:scale-105 active:scale-95 hover:shadow-[0_0_30px_rgba(15,227,194,0.4)]"
+              >
+                <span className="relative z-10">Start Automating</span>
+                <ArrowRight className="h-5 w-5 relative z-10 transition-transform duration-300 group-hover:translate-x-1" />
+              </Link>
+            </motion.div>
+
+            {/* Stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="flex items-center justify-center gap-8 md:gap-16 mt-12 pt-8 border-t border-border-subtle/30"
+            >
+              {stats.map((stat) => (
+                <div key={stat.label} className="text-center">
+                  <div className="text-2xl md:text-3xl font-bold text-text-primary font-mono">
+                    {stat.value}
+                  </div>
+                  <div className="text-sm text-text-muted mt-1">{stat.label}</div>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FAQItem({ question, answer, index }: { question: string; answer: string; index: number }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="border-b border-white/10">
+    <motion.div
+      className="border-b border-border-subtle last:border-0"
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: index * 0.1, duration: 0.5 }}
+    >
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full py-5 flex items-center justify-between text-left group"
+        className="w-full py-6 flex items-center justify-between text-left group"
       >
-        <span className="font-serif text-[#F2F2F2] group-hover:text-[#D4AF37] transition-colors">
+        <span className="text-lg font-medium text-text-primary group-hover:text-accent transition-colors duration-200">
           {question}
         </span>
-        {isOpen ? (
-          <ChevronUp className="h-5 w-5 text-[#A1A1AA]" />
-        ) : (
-          <ChevronDown className="h-5 w-5 text-[#A1A1AA]" />
-        )}
-      </button>
-      {isOpen && (
         <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          className="pb-5"
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.25 }}
+          className="ml-4 flex-shrink-0"
         >
-          <p className="text-[#A1A1AA] text-sm leading-relaxed font-light">{answer}</p>
+          <ChevronDown className="w-5 h-5 text-text-muted group-hover:text-accent transition-colors" />
         </motion.div>
-      )}
-    </div>
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden"
+          >
+            <p className="text-text-secondary text-base leading-relaxed pb-6 pr-8">
+              {answer}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
 
@@ -117,110 +270,160 @@ export default function Home() {
   const logs = useLogs();
   const { allTools } = useTools();
   const router = useRouter();
+  const { scrollYProgress } = useScroll();
+  const headerBg = useTransform(scrollYProgress, [0, 0.05], ['rgba(11, 15, 18, 0)', 'rgba(11, 15, 18, 0.95)']);
 
   const handleExecutionSelect = (executionId: string) => {
     router.push(`/executions/${executionId}`);
   };
 
-  const handleCloseConfirmDialog = () => {};
-
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden vignette">
+    <div className="min-h-screen relative">
+      {/* Ambient Background */}
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute inset-0 bg-bg-primary" />
+        <div
+          className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full blur-[150px] opacity-[0.15]"
+          style={{ background: 'radial-gradient(circle, #0FE3C2 0%, transparent 70%)' }}
+        />
+        <div
+          className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full blur-[120px] opacity-[0.1]"
+          style={{ background: 'radial-gradient(circle, #0FE3C2 0%, transparent 70%)' }}
+        />
+      </div>
+
       {/* Content */}
       <div className="relative z-10">
         {/* Header */}
-        <header className="border-b border-white/10 sticky top-0 z-40 bg-black/80 backdrop-blur-sm">
-          <div className="container mx-auto px-6 h-16 flex items-center justify-between">
+        <motion.header
+          style={{ backgroundColor: headerBg }}
+          className="border-b border-border-subtle/30 sticky top-0 z-40 backdrop-blur-xl"
+        >
+          <div className="container mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
             {/* Logo */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-3"
-            >
-              <div className="p-2 rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20">
-                <Command className="h-5 w-5 text-[#D4AF37]" />
+            <Link href="/" className="flex items-center gap-2 group">
+              <div className="w-8 h-8 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                <Zap className="w-4 h-4 text-accent" />
               </div>
-              <span className="text-xl font-serif font-medium text-[#F2F2F2]">Opsuna</span>
-            </motion.div>
+              <span className="text-xl font-semibold tracking-tight">
+                <span className="text-text-primary">Opsuna</span>
+                <span className="text-accent ml-0.5">.</span>
+              </span>
+            </Link>
 
             {/* Navigation */}
-            <motion.nav
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="hidden md:flex items-center gap-8"
-            >
+            <nav className="hidden md:flex items-center gap-1">
               {NAV_ITEMS.map((item) => (
                 <Link
                   key={item.label}
                   href={item.href}
-                  className="text-sm text-[#A1A1AA] hover:text-[#F2F2F2] transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors rounded-lg hover:bg-bg-surface/50"
                 >
                   {item.label}
                 </Link>
               ))}
-            </motion.nav>
+            </nav>
 
-            {/* Status */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-3"
-            >
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5">
-                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-zinc-500'}`} />
-                <span className="text-xs font-mono text-[#71717A]">
+            {/* Status Indicator */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-bg-surface/50 border border-border-subtle">
+                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-accent' : 'bg-text-muted'}`}>
+                  {isConnected && (
+                    <div className="w-2 h-2 rounded-full bg-accent animate-ping" />
+                  )}
+                </div>
+                <span className="text-xs font-medium text-text-muted">
                   {isConnected ? 'Connected' : 'Offline'}
                 </span>
               </div>
-            </motion.div>
-          </div>
-        </header>
-
-        {/* Hero Section */}
-        <section className="container mx-auto px-6 pt-20 pb-12 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="max-w-3xl mx-auto"
-          >
-            <div className="flex items-center justify-center gap-2 mb-6">
-              <Sparkles className="h-4 w-4 text-[#D4AF37]" />
-              <span className="text-xs font-mono text-[#D4AF37] uppercase tracking-wider">
-                AI-Powered Automation
-              </span>
             </div>
-            <h1 className="text-5xl md:text-6xl font-serif font-medium text-[#F2F2F2] mb-6 leading-tight tracking-tighter">
-              Compose Actions with{' '}
-              <em className="gold-text">Natural Language</em>
-            </h1>
-            <p className="text-[#A1A1AA] text-lg md:text-xl leading-relaxed mb-10 max-w-2xl mx-auto font-light">
-              Transform prompts into safe, reviewable action chains. Preview before you execute.
-            </p>
-          </motion.div>
+          </div>
+        </motion.header>
+
+        {/* Hero Section with Dithering Effect */}
+        <HeroSection stats={STATS} />
+
+        {/* Features Strip */}
+        <section className="border-y border-border-subtle/50 bg-bg-surface/20 backdrop-blur-sm">
+          <div className="container mx-auto px-6 lg:px-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-border-subtle/50">
+              {FEATURES.map((feature, i) => (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1, duration: 0.5 }}
+                  className="group py-8 px-6 relative overflow-hidden"
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-b ${feature.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                  <div className="relative">
+                    <h3 className="text-base font-semibold text-text-primary mb-2 group-hover:text-accent transition-colors">
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm text-text-muted leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
         </section>
 
-        {/* Main Content - Bento Grid */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="container mx-auto px-6 pb-16"
-        >
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Main Content */}
+        <section className="container mx-auto px-6 lg:px-8 py-16 lg:py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Main Panel */}
-            <motion.div variants={itemVariants} className="lg:col-span-8 space-y-6">
+            <div className="lg:col-span-8 space-y-6">
               {/* Prompt Card */}
-              <div className="card p-6 space-y-4">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="card p-6 lg:p-8"
+              >
+                <div className="mb-6">
+                  <h2 className="text-2xl font-semibold text-text-primary mb-2">
+                    What would you like to do?
+                  </h2>
+                  <p className="text-base text-text-secondary">
+                    Describe your task in plain English. Be specific or broad—Opsuna adapts.
+                  </p>
+                </div>
+
                 <AgentSelector />
-                <PromptInput
-                  value={prompt}
-                  onChange={setPrompt}
-                  onSubmit={submitPrompt}
-                  isLoading={isLoading}
-                  disabled={status === 'executing'}
-                />
-              </div>
+
+                <div className="mt-4">
+                  <PromptInput
+                    value={prompt}
+                    onChange={setPrompt}
+                    onSubmit={submitPrompt}
+                    isLoading={isLoading}
+                    disabled={status === 'executing'}
+                  />
+                </div>
+
+                {/* Quick Examples */}
+                <div className="mt-6 pt-6 border-t border-border-subtle">
+                  <p className="text-sm text-text-muted mb-3">Try these examples:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      'Deploy staging and run smoke tests',
+                      'Create a PR for the current branch',
+                      'Notify the team about the release',
+                    ].map((example) => (
+                      <button
+                        key={example}
+                        onClick={() => setPrompt(example)}
+                        className="text-sm px-3 py-1.5 rounded-lg bg-bg-elevated border border-border-subtle text-text-secondary hover:text-text-primary hover:border-accent/30 transition-all"
+                      >
+                        {example}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
 
               <ExecutionPanel
                 executionId={executionId}
@@ -234,50 +437,42 @@ export default function Home() {
                 isLoading={isLoading}
                 onConfirm={confirm}
                 onCancel={cancel}
-                onCloseConfirmDialog={handleCloseConfirmDialog}
+                onCloseConfirmDialog={() => {}}
                 onReset={reset}
               />
-            </motion.div>
+            </div>
 
             {/* Sidebar */}
-            <motion.div variants={itemVariants} className="lg:col-span-4 space-y-6">
-              <HistoryList onSelect={handleExecutionSelect} />
+            <div className="lg:col-span-4 space-y-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
+                <HistoryList onSelect={handleExecutionSelect} />
+              </motion.div>
 
-              {/* Stats Card */}
-              <div className="card p-6">
-                <h3 className="font-serif text-lg text-[#F2F2F2] mb-4 flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-[#D4AF37]" />
-                  Quick Stats
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-[#A1A1AA]">Executions Today</span>
-                    <span className="font-mono text-sm text-[#F2F2F2]">24</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-[#A1A1AA]">Success Rate</span>
-                    <span className="font-mono text-sm text-emerald-400">98.2%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-[#A1A1AA]">Active Tools</span>
-                    <span className="font-mono text-sm text-[#F2F2F2]">12</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick Actions */}
-              <div className="card p-6">
+              {/* Tools Preview */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="card p-6"
+              >
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-serif text-lg text-[#F2F2F2] flex items-center gap-2">
-                    <Terminal className="h-4 w-4 text-[#D4AF37]" />
-                    Available Tools
+                  <h3 className="text-lg font-semibold text-text-primary">
+                    Connected Tools
                   </h3>
-                  <Link href="/tools" className="text-xs text-[#D4AF37] hover:underline">
+                  <Link
+                    href="/tools"
+                    className="text-sm text-accent hover:text-accent-hover transition-colors flex items-center gap-1 group"
+                  >
                     View all
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                   </Link>
                 </div>
                 <div className="space-y-2">
-                  {(allTools.length > 0 ? allTools.slice(0, 6) : [
+                  {(allTools.length > 0 ? allTools.slice(0, 5) : [
                     { name: 'deploy_staging', source: 'local' },
                     { name: 'run_smoke_tests', source: 'local' },
                     { name: 'create_github_pr', source: 'local' },
@@ -285,50 +480,156 @@ export default function Home() {
                   ]).map((tool) => (
                     <div
                       key={tool.name}
-                      className="px-3 py-2 rounded-md bg-white/5 border border-white/5 hover:border-[#D4AF37]/30 transition-colors flex items-center justify-between"
+                      className="px-3 py-2.5 rounded-lg bg-bg-elevated/50 border border-border-subtle hover:border-accent/30 transition-all flex items-center justify-between group"
                     >
-                      <span className="font-mono text-xs text-[#A1A1AA]">{tool.name}</span>
-                      <span className={`text-[10px] font-mono uppercase ${
-                        tool.source === 'composio' ? 'text-[#D4AF37]' : 'text-[#71717A]'
-                      }`}>
-                        {tool.source}
+                      <span className="font-mono text-sm text-text-secondary group-hover:text-text-primary transition-colors">
+                        {tool.name}
                       </span>
+                      <Badge
+                        variant={tool.source === 'composio' ? 'default' : 'secondary'}
+                        size="sm"
+                      >
+                        {tool.source}
+                      </Badge>
                     </div>
                   ))}
                 </div>
-              </div>
-            </motion.div>
-          </div>
-        </motion.div>
+              </motion.div>
 
-        {/* FAQ Section */}
-        <section className="container mx-auto px-6 py-16">
+              {/* How It Works */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="card p-6"
+              >
+                <h3 className="text-lg font-semibold text-text-primary mb-5">
+                  How it works
+                </h3>
+                <div className="space-y-4">
+                  {[
+                    { step: '01', text: 'Describe your task in natural language', icon: Terminal },
+                    { step: '02', text: 'Review the generated execution plan', icon: GitBranch },
+                    { step: '03', text: 'Confirm to execute with full control', icon: Shield },
+                    { step: '04', text: 'Monitor progress with real-time logs', icon: MessageSquare },
+                  ].map((item, i) => (
+                    <div key={item.step} className="flex items-start gap-4">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center">
+                        <item.icon className="w-4 h-4 text-accent" />
+                      </div>
+                      <div className="pt-1">
+                        <span className="text-sm text-text-secondary">{item.text}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </section>
+
+        {/* Trust Section */}
+        <section className="container mx-auto px-6 lg:px-8 py-16 lg:py-24">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="max-w-2xl mx-auto"
+            transition={{ duration: 0.6 }}
+            className="max-w-4xl mx-auto"
           >
-            <h2 className="text-3xl font-serif font-medium text-[#F2F2F2] text-center mb-10">
-              Frequently Asked <em className="gold-text">Questions</em>
-            </h2>
-            <div className="card px-6">
-              {FAQ_ITEMS.map((item) => (
-                <FAQItem key={item.question} {...item} />
+            <div className="text-center mb-14">
+              <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
+                Built for teams who <span className="text-accent">ship with confidence</span>
+              </h2>
+              <p className="text-lg text-text-secondary max-w-2xl mx-auto">
+                Every action is auditable. Every change is reversible. Every deployment is stress-free.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                {
+                  icon: Clock,
+                  title: 'Full Audit Trail',
+                  description: 'Complete execution logs with timestamps, user attribution, and outcome tracking.',
+                },
+                {
+                  icon: RotateCcw,
+                  title: 'Instant Rollbacks',
+                  description: 'One-click rollback to any previous state. No manual cleanup required.',
+                },
+                {
+                  icon: Shield,
+                  title: 'Production Safe',
+                  description: 'High-risk actions need typed confirmation. Intent tokens expire in 5 minutes.',
+                },
+              ].map((item, i) => (
+                <motion.div
+                  key={item.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1, duration: 0.5 }}
+                  className="card p-6 hover:border-accent/20 transition-colors group"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
+                    <item.icon className="w-5 h-5 text-accent" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-text-primary mb-2">{item.title}</h3>
+                  <p className="text-sm text-text-secondary leading-relaxed">{item.description}</p>
+                </motion.div>
               ))}
             </div>
           </motion.div>
         </section>
 
+        {/* FAQ Section */}
+        <section className="container mx-auto px-6 lg:px-8 py-16 lg:py-24">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="max-w-3xl mx-auto"
+          >
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-3">
+                Frequently Asked Questions
+              </h2>
+              <p className="text-lg text-text-secondary">
+                Everything you need to know about Opsuna.
+              </p>
+            </div>
+            <div className="card p-6 lg:p-8">
+              {FAQ_ITEMS.map((item, index) => (
+                <FAQItem key={item.question} {...item} index={index} />
+              ))}
+            </div>
+          </motion.div>
+        </section>
+
+        {/* CTA Section with Dithering Effect */}
+        <CTASection />
+
         {/* Footer */}
-        <footer className="border-t border-white/10 py-8">
-          <div className="container mx-auto px-6 text-center">
-            <p className="text-[#A1A1AA] text-sm font-light">
-              Safe action orchestration with AI-powered intelligence
-            </p>
-            <p className="text-[#71717A] text-xs mt-2 font-mono">
-              Opsuna Tambo v0.1.0
-            </p>
+        <footer className="border-t border-border-subtle/50 py-10">
+          <div className="container mx-auto px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-accent/10 border border-accent/20 flex items-center justify-center">
+                  <Zap className="w-3 h-3 text-accent" />
+                </div>
+                <span className="text-lg font-semibold">
+                  <span className="text-text-primary">Opsuna</span>
+                  <span className="text-accent">.</span>
+                </span>
+              </div>
+              <p className="text-sm text-text-muted">
+                Safe action orchestration for modern development teams
+              </p>
+              <p className="text-xs text-text-muted font-mono">
+                v0.1.0 · Built with Tambo
+              </p>
+            </div>
           </div>
         </footer>
 

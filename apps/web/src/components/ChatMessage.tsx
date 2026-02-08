@@ -42,22 +42,22 @@ export const ChatMessage = forwardRef<HTMLDivElement, ChatMessageProps>(function
       transition={{ duration: 0.3 }}
       className={cn(
         'flex gap-3 p-4 rounded-lg',
-        isUser ? 'bg-accent-orange/10 ml-12' : 'bg-surface-elevated mr-12'
+        isUser ? 'bg-accent/5 ml-12' : 'bg-bg-elevated mr-12'
       )}
     >
       {/* Avatar */}
       <div
         className={cn(
           'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-          isUser ? 'bg-accent-orange/20' : 'bg-accent-blue/20'
+          isUser ? 'bg-accent/20' : isExecution ? 'bg-warning/20' : 'bg-info/20'
         )}
       >
         {isUser ? (
-          <User className="w-4 h-4 text-accent-orange" />
+          <User className="w-4 h-4 text-accent" />
         ) : isExecution ? (
-          <Zap className="w-4 h-4 text-accent-gold" />
+          <Zap className="w-4 h-4 text-warning" />
         ) : (
-          <Bot className="w-4 h-4 text-accent-blue" />
+          <Bot className="w-4 h-4 text-info" />
         )}
       </div>
 
@@ -77,7 +77,7 @@ export const ChatMessage = forwardRef<HTMLDivElement, ChatMessageProps>(function
         {/* Message content */}
         {message.isLoading ? (
           <div className="flex items-center gap-2 text-text-muted">
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className="w-4 h-4 animate-spin text-accent" />
             <span className="text-sm">Thinking...</span>
           </div>
         ) : (
@@ -119,7 +119,7 @@ function PlanPreview({
   const showActions = status === 'awaiting_confirmation';
 
   return (
-    <div className="mt-3 p-3 bg-surface-base rounded-lg border border-border-subtle">
+    <div className="mt-3 p-3 bg-bg-primary rounded-lg border border-border-subtle">
       {/* Plan header */}
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-medium text-text-muted uppercase tracking-wide">
@@ -138,13 +138,13 @@ function PlanPreview({
             key={step.id}
             className="flex items-start gap-2 text-xs text-text-muted"
           >
-            <span className="w-5 h-5 rounded-full bg-surface-elevated flex items-center justify-center flex-shrink-0">
+            <span className="w-5 h-5 rounded-full bg-bg-elevated flex items-center justify-center flex-shrink-0 text-text-secondary">
               {index + 1}
             </span>
             <div>
-              <span className="font-mono text-accent-blue">{step.toolName}</span>
-              <span className="mx-1">-</span>
-              <span>{step.description}</span>
+              <span className="font-mono text-accent">{step.toolName}</span>
+              <span className="mx-1 text-text-muted">-</span>
+              <span className="text-text-secondary">{step.description}</span>
             </div>
           </div>
         ))}
@@ -155,14 +155,14 @@ function PlanPreview({
         <div className="flex gap-2 pt-2 border-t border-border-subtle">
           <button
             onClick={onConfirm}
-            className="flex-1 px-3 py-2 bg-accent-green/20 hover:bg-accent-green/30
-                       text-accent-green rounded-lg text-sm font-medium transition-colors"
+            className="flex-1 px-3 py-2 bg-success/10 hover:bg-success/20 border border-success/20 hover:border-success/30
+                       text-success rounded-lg text-sm font-medium transition-colors"
           >
             Confirm & Execute
           </button>
           <button
             onClick={onCancel}
-            className="flex-1 px-3 py-2 bg-surface-elevated hover:bg-surface-base
+            className="flex-1 px-3 py-2 bg-bg-elevated hover:bg-bg-surface border border-border-subtle
                        text-text-muted rounded-lg text-sm font-medium transition-colors"
           >
             Cancel
@@ -178,20 +178,20 @@ function ResultsSummary({ results }: { results: ToolCallResult[] }) {
   const failedCount = results.filter((r) => r.status === 'failed').length;
 
   return (
-    <div className="mt-3 p-3 bg-surface-base rounded-lg border border-border-subtle">
+    <div className="mt-3 p-3 bg-bg-primary rounded-lg border border-border-subtle">
       <div className="flex items-center gap-4 mb-2">
         <span className="text-xs font-medium text-text-muted uppercase tracking-wide">
           Results
         </span>
         <div className="flex items-center gap-3 text-xs">
           {successCount > 0 && (
-            <span className="flex items-center gap-1 text-accent-green">
+            <span className="flex items-center gap-1 text-success">
               <CheckCircle2 className="w-3 h-3" />
               {successCount} passed
             </span>
           )}
           {failedCount > 0 && (
-            <span className="flex items-center gap-1 text-accent-red">
+            <span className="flex items-center gap-1 text-destructive">
               <XCircle className="w-3 h-3" />
               {failedCount} failed
             </span>
@@ -206,15 +206,15 @@ function ResultsSummary({ results }: { results: ToolCallResult[] }) {
             className="flex items-center gap-2 text-xs"
           >
             {result.status === 'success' ? (
-              <CheckCircle2 className="w-3 h-3 text-accent-green" />
+              <CheckCircle2 className="w-3 h-3 text-success" />
             ) : result.status === 'failed' ? (
-              <XCircle className="w-3 h-3 text-accent-red" />
+              <XCircle className="w-3 h-3 text-destructive" />
             ) : (
               <Clock className="w-3 h-3 text-text-muted" />
             )}
             <span className="font-mono text-text-muted">{result.toolName}</span>
             {result.error && (
-              <span className="text-accent-red truncate">{result.error}</span>
+              <span className="text-destructive truncate">{result.error}</span>
             )}
           </div>
         ))}
@@ -224,37 +224,29 @@ function ResultsSummary({ results }: { results: ToolCallResult[] }) {
 }
 
 function StatusBadge({ status }: { status: ExecutionStatus }) {
-  const config: Record<ExecutionStatus, { label: string; className: string }> = {
-    pending: { label: 'Pending', className: 'bg-gray-500/20 text-gray-400' },
-    awaiting_confirmation: { label: 'Awaiting', className: 'bg-yellow-500/20 text-yellow-400' },
-    executing: { label: 'Running', className: 'bg-blue-500/20 text-blue-400' },
-    completed: { label: 'Done', className: 'bg-green-500/20 text-green-400' },
-    failed: { label: 'Failed', className: 'bg-red-500/20 text-red-400' },
-    cancelled: { label: 'Cancelled', className: 'bg-gray-500/20 text-gray-400' },
-    rolled_back: { label: 'Rolled Back', className: 'bg-orange-500/20 text-orange-400' },
+  const config: Record<ExecutionStatus, { label: string; variant: 'secondary' | 'warning' | 'info' | 'success' | 'destructive' }> = {
+    pending: { label: 'Pending', variant: 'secondary' },
+    awaiting_confirmation: { label: 'Awaiting', variant: 'warning' },
+    executing: { label: 'Running', variant: 'info' },
+    completed: { label: 'Done', variant: 'success' },
+    failed: { label: 'Failed', variant: 'destructive' },
+    cancelled: { label: 'Cancelled', variant: 'secondary' },
+    rolled_back: { label: 'Rolled Back', variant: 'warning' },
   };
 
-  const { label, className } = config[status];
-  return (
-    <span className={cn('px-2 py-0.5 rounded text-xs font-medium', className)}>
-      {label}
-    </span>
-  );
+  const { label, variant } = config[status];
+  return <Badge variant={variant} size="sm">{label}</Badge>;
 }
 
 function RiskBadge({ risk }: { risk: string }) {
-  const config: Record<string, { className: string }> = {
-    LOW: { className: 'bg-green-500/20 text-green-400' },
-    MEDIUM: { className: 'bg-yellow-500/20 text-yellow-400' },
-    HIGH: { className: 'bg-red-500/20 text-red-400' },
+  const config: Record<string, { variant: 'success' | 'warning' | 'destructive' }> = {
+    LOW: { variant: 'success' },
+    MEDIUM: { variant: 'warning' },
+    HIGH: { variant: 'destructive' },
   };
 
-  const { className } = config[risk] || config.LOW;
-  return (
-    <span className={cn('px-2 py-0.5 rounded text-xs font-medium', className)}>
-      {risk} Risk
-    </span>
-  );
+  const { variant } = config[risk] || config.LOW;
+  return <Badge variant={variant} size="sm">{risk} Risk</Badge>;
 }
 
 function formatTime(date: Date): string {

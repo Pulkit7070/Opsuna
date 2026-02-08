@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Filter, RefreshCw } from 'lucide-react';
+import { Search, Filter, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { useTools } from '@/hooks/useTools';
 import { ToolCard } from './ToolCard';
+import { Badge } from '@/components/ui/badge';
+import { Spinner } from '@/components/ui/spinner';
 
 const CATEGORIES = [
   { value: '', label: 'All' },
@@ -57,14 +59,11 @@ export function ToolCatalog() {
 
     if (result) {
       if (result.alreadyConnected) {
-        // User is already connected - show success message
         setConnectSuccess(result.message || `You're already connected to ${appName}!`);
       } else if (result.redirectUrl) {
-        // Open OAuth flow in popup
         window.open(result.redirectUrl, 'composio-auth', 'width=600,height=700,popup=true');
       }
     } else {
-      // Connection failed - show helpful message
       setConnectError(
         `Could not connect ${appName}. OAuth integration needs to be configured in the Composio dashboard (app.composio.dev). ` +
         `Local tools work without configuration.`
@@ -82,27 +81,28 @@ export function ToolCatalog() {
       {/* Search & Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <form onSubmit={handleSearch} className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#71717A]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
           <input
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search tools..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-sm text-[#F2F2F2] placeholder:text-[#71717A] focus:outline-none focus:border-[#D4AF37]/50 transition-colors"
+            className="input-base pl-10"
           />
         </form>
 
         <div className="flex gap-2">
           {/* Category filter */}
           <div className="relative">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#71717A] pointer-events-none" />
+            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
             <select
               value={filter.category || ''}
               onChange={(e) => setFilter({ category: e.target.value || undefined })}
-              className="pl-10 pr-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-sm text-[#A1A1AA] focus:outline-none focus:border-[#D4AF37]/50 appearance-none cursor-pointer"
+              className="pl-10 pr-4 py-2.5 rounded-lg bg-bg-surface border border-border-subtle text-sm text-text-secondary
+                         focus:outline-none focus:border-accent appearance-none cursor-pointer hover:border-border-highlight transition-colors"
             >
               {CATEGORIES.map((cat) => (
-                <option key={cat.value} value={cat.value} className="bg-[#121212]">
+                <option key={cat.value} value={cat.value} className="bg-bg-surface">
                   {cat.label}
                 </option>
               ))}
@@ -113,10 +113,11 @@ export function ToolCatalog() {
           <select
             value={filter.source || ''}
             onChange={(e) => setFilter({ source: e.target.value || undefined })}
-            className="px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-sm text-[#A1A1AA] focus:outline-none focus:border-[#D4AF37]/50 appearance-none cursor-pointer"
+            className="px-4 py-2.5 rounded-lg bg-bg-surface border border-border-subtle text-sm text-text-secondary
+                       focus:outline-none focus:border-accent appearance-none cursor-pointer hover:border-border-highlight transition-colors"
           >
             {SOURCES.map((src) => (
-              <option key={src.value} value={src.value} className="bg-[#121212]">
+              <option key={src.value} value={src.value} className="bg-bg-surface">
                 {src.label}
               </option>
             ))}
@@ -126,25 +127,25 @@ export function ToolCatalog() {
           <button
             onClick={() => fetchTools()}
             disabled={isLoading}
-            className="p-2.5 rounded-lg bg-white/5 border border-white/10 hover:border-[#D4AF37]/30 transition-colors disabled:opacity-50"
+            className="p-2.5 rounded-lg bg-bg-surface border border-border-subtle hover:border-accent/30 transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 text-[#A1A1AA] ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 text-text-secondary ${isLoading ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
 
       {/* Error */}
       {error && (
-        <div className="p-4 rounded-lg bg-red-400/10 border border-red-400/20 text-sm text-red-400">
+        <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
           {error}
         </div>
       )}
 
       {/* Connection Success */}
       {connectSuccess && (
-        <div className="p-4 rounded-lg bg-emerald-400/10 border border-emerald-400/20 text-sm text-emerald-400">
+        <div className="p-4 rounded-lg bg-success/10 border border-success/20 text-sm text-success">
           <div className="flex items-start gap-2">
-            <span className="mt-0.5">✓</span>
+            <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
             <p>{connectSuccess}</p>
           </div>
           <button
@@ -158,9 +159,9 @@ export function ToolCatalog() {
 
       {/* Connection Error */}
       {connectError && (
-        <div className="p-4 rounded-lg bg-amber-400/10 border border-amber-400/20 text-sm text-amber-400">
+        <div className="p-4 rounded-lg bg-warning/10 border border-warning/20 text-sm text-warning">
           <div className="flex items-start gap-2">
-            <span className="mt-0.5">⚠️</span>
+            <span className="mt-0.5 flex-shrink-0">!</span>
             <div>
               <p>{connectError}</p>
               <p className="mt-2 text-xs opacity-75">
@@ -180,8 +181,8 @@ export function ToolCatalog() {
       {/* Loading */}
       {isLoading && tools.length === 0 && (
         <div className="text-center py-12">
-          <RefreshCw className="w-6 h-6 text-[#D4AF37] animate-spin mx-auto mb-3" />
-          <p className="text-sm text-[#71717A]">Loading tools...</p>
+          <Spinner size="lg" variant="primary" className="mx-auto mb-3" />
+          <p className="text-sm text-text-muted">Loading tools...</p>
         </div>
       )}
 
@@ -205,17 +206,23 @@ export function ToolCatalog() {
       ) : (
         !isLoading && (
           <div className="text-center py-12">
-            <p className="text-sm text-[#71717A]">No tools found</p>
+            <p className="text-sm text-text-muted">No tools found</p>
           </div>
         )
       )}
 
       {/* Stats */}
-      <div className="flex items-center justify-between text-xs text-[#71717A] pt-2">
+      <div className="flex items-center justify-between text-xs text-text-muted pt-2">
         <span>{tools.length} tool{tools.length !== 1 ? 's' : ''}</span>
         <div className="flex gap-4">
-          <span>{tools.filter(t => t.source === 'local').length} local</span>
-          <span>{tools.filter(t => t.source === 'composio').length} composio</span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-text-muted"></span>
+            {tools.filter(t => t.source === 'local').length} local
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-accent"></span>
+            {tools.filter(t => t.source === 'composio').length} composio
+          </span>
         </div>
       </div>
     </div>

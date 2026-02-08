@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Download, FileText, Archive, Trash2, ExternalLink } from 'lucide-react';
 import { useArtifacts, Artifact } from '@/hooks/useArtifacts';
+import { Spinner } from '@/components/ui/spinner';
 
 interface ArtifactListProps {
   executionId: string;
@@ -72,14 +73,14 @@ export function ArtifactList({ executionId, onArtifactClick }: ArtifactListProps
   if (loading && artifacts.length === 0) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="w-5 h-5 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+        <Spinner size="sm" variant="primary" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-red-400 text-sm py-4 text-center">
+      <div className="text-destructive text-sm py-4 text-center">
         {error}
       </div>
     );
@@ -87,7 +88,7 @@ export function ArtifactList({ executionId, onArtifactClick }: ArtifactListProps
 
   if (artifacts.length === 0) {
     return (
-      <div className="text-neutral-500 text-sm py-8 text-center">
+      <div className="text-text-muted text-sm py-8 text-center">
         No artifacts available
       </div>
     );
@@ -101,18 +102,18 @@ export function ArtifactList({ executionId, onArtifactClick }: ArtifactListProps
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.05 }}
-          className="flex items-center justify-between p-3 bg-neutral-800/50 rounded-lg border border-neutral-700/50 hover:border-[#D4AF37]/30 transition-colors"
+          className="flex items-center justify-between p-3 bg-bg-elevated rounded-lg border border-border-subtle hover:border-accent/30 transition-colors"
         >
           <div
             className="flex items-center gap-3 flex-1 cursor-pointer"
             onClick={() => onArtifactClick?.(artifact)}
           >
-            <div className="p-2 bg-neutral-700/50 rounded-lg text-[#D4AF37]">
+            <div className="p-2 bg-bg-surface rounded-lg text-accent">
               {getIcon(artifact.type)}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-neutral-200 truncate">{artifact.name}</p>
-              <div className="flex items-center gap-2 text-xs text-neutral-500">
+              <p className="text-sm text-text-primary truncate">{artifact.name}</p>
+              <div className="flex items-center gap-2 text-xs text-text-muted">
                 <span>{artifact.type.replace('_', ' ')}</span>
                 <span>-</span>
                 <span>{formatSize(artifact.size)}</span>
@@ -126,7 +127,7 @@ export function ArtifactList({ executionId, onArtifactClick }: ArtifactListProps
                 href={artifact.publicUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 text-neutral-400 hover:text-[#D4AF37] transition-colors"
+                className="p-2 text-text-muted hover:text-accent transition-colors"
               >
                 <ExternalLink className="w-4 h-4" />
               </a>
@@ -134,7 +135,7 @@ export function ArtifactList({ executionId, onArtifactClick }: ArtifactListProps
             <button
               onClick={() => handleDownload(artifact)}
               disabled={downloading === artifact.id}
-              className="p-2 text-neutral-400 hover:text-[#D4AF37] transition-colors disabled:opacity-50"
+              className="p-2 text-text-muted hover:text-accent transition-colors disabled:opacity-50"
             >
               {downloading === artifact.id ? (
                 <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -144,7 +145,7 @@ export function ArtifactList({ executionId, onArtifactClick }: ArtifactListProps
             </button>
             <button
               onClick={() => handleDelete(artifact)}
-              className="p-2 text-neutral-400 hover:text-red-400 transition-colors"
+              className="p-2 text-text-muted hover:text-destructive transition-colors"
             >
               <Trash2 className="w-4 h-4" />
             </button>

@@ -6,6 +6,8 @@ import { ExecutionSummary } from '@opsuna/shared';
 import { getExecutions } from '@/hooks/useApi';
 import { History, ChevronRight, RefreshCw, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Spinner } from '@/components/ui/spinner';
 
 interface HistoryListProps {
   onSelect?: (executionId: string) => void;
@@ -35,10 +37,10 @@ export function HistoryList({ onSelect }: HistoryListProps) {
 
   return (
     <div className="card">
-      <div className="p-4 border-b border-white/10">
+      <div className="p-4 border-b border-border-subtle">
         <div className="flex items-center justify-between">
-          <h3 className="font-serif text-lg text-[#F2F2F2] flex items-center gap-2">
-            <History className="h-4 w-4 text-[#D4AF37]" />
+          <h3 className="font-semibold text-lg text-text-primary flex items-center gap-2">
+            <History className="h-4 w-4 text-accent" />
             Recent Executions
           </h3>
           <motion.button
@@ -46,7 +48,7 @@ export function HistoryList({ onSelect }: HistoryListProps) {
             whileTap={{ scale: 0.9 }}
             onClick={loadExecutions}
             disabled={isLoading}
-            className="p-1.5 rounded-lg hover:bg-white/5 text-[#71717A] hover:text-[#F2F2F2] transition-colors"
+            className="p-1.5 rounded-lg hover:bg-bg-elevated text-text-muted hover:text-text-primary transition-colors"
           >
             <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
           </motion.button>
@@ -54,11 +56,15 @@ export function HistoryList({ onSelect }: HistoryListProps) {
       </div>
 
       <div className="p-2">
-        {executions.length === 0 ? (
+        {isLoading && executions.length === 0 ? (
+          <div className="flex items-center justify-center py-8">
+            <Spinner size="md" variant="primary" />
+          </div>
+        ) : executions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <Clock className="h-8 w-8 text-[#71717A] mb-2" />
-            <p className="text-sm text-[#71717A]">No executions yet</p>
-            <p className="text-xs text-[#71717A] mt-1 font-mono">Your history will appear here</p>
+            <Clock className="h-8 w-8 text-text-muted mb-2" />
+            <p className="text-sm text-text-muted">No executions yet</p>
+            <p className="text-xs text-text-muted mt-1 font-mono">Your history will appear here</p>
           </div>
         ) : (
           <AnimatePresence>
@@ -70,21 +76,21 @@ export function HistoryList({ onSelect }: HistoryListProps) {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
                   onClick={() => onSelect?.(exec.id)}
-                  className="w-full text-left p-3 rounded-lg hover:bg-white/5
+                  className="w-full text-left p-3 rounded-lg hover:bg-bg-elevated
                              transition-all duration-200 group flex items-center justify-between"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm text-[#F2F2F2] truncate group-hover:text-[#D4AF37] transition-colors">
+                    <p className="text-sm text-text-primary truncate group-hover:text-accent transition-colors">
                       {exec.prompt}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
                       <StatusBadge status={exec.status} />
-                      <span className="text-xs text-[#71717A] font-mono">
+                      <span className="text-xs text-text-muted font-mono">
                         {formatDate(exec.createdAt)}
                       </span>
                     </div>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-[#71717A] group-hover:text-[#D4AF37] group-hover:translate-x-1 transition-all" />
+                  <ChevronRight className="h-4 w-4 text-text-muted group-hover:text-accent group-hover:translate-x-1 transition-all" />
                 </motion.button>
               ))}
             </div>
@@ -96,22 +102,22 @@ export function HistoryList({ onSelect }: HistoryListProps) {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const config: Record<string, { bg: string; text: string; border: string }> = {
-    pending: { bg: 'bg-zinc-500/10', text: 'text-zinc-400', border: 'border-zinc-500/20' },
-    awaiting_confirmation: { bg: 'bg-[#D4AF37]/10', text: 'text-[#D4AF37]', border: 'border-[#D4AF37]/20' },
-    executing: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/20' },
-    completed: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20' },
-    failed: { bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/20' },
-    cancelled: { bg: 'bg-zinc-500/10', text: 'text-zinc-400', border: 'border-zinc-500/20' },
-    rolled_back: { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/20' },
+  const config: Record<string, { variant: 'secondary' | 'warning' | 'info' | 'success' | 'destructive' | 'default' }> = {
+    pending: { variant: 'secondary' },
+    awaiting_confirmation: { variant: 'warning' },
+    executing: { variant: 'info' },
+    completed: { variant: 'success' },
+    failed: { variant: 'destructive' },
+    cancelled: { variant: 'secondary' },
+    rolled_back: { variant: 'warning' },
   };
 
-  const { bg, text, border } = config[status] || config.pending;
+  const { variant } = config[status] || config.pending;
 
   return (
-    <span className={cn('text-xs px-2 py-0.5 rounded-full border font-mono', bg, text, border)}>
+    <Badge variant={variant} size="sm">
       {status.replace('_', ' ')}
-    </span>
+    </Badge>
   );
 }
 

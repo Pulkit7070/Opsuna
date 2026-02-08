@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Play, Pause, RotateCcw, CheckCircle, XCircle, Clock, ChevronRight } from 'lucide-react';
 import { ReplayData, ReplayEvent } from '@/hooks/useArtifacts';
+import { Badge } from '@/components/ui/badge';
 
 interface ExecutionReplayProps {
   data: ReplayData;
@@ -53,20 +54,20 @@ export function ExecutionReplay({ data }: ExecutionReplayProps) {
   const getEventIcon = (event: ReplayEvent) => {
     switch (event.type) {
       case 'EXECUTION_STARTED':
-        return <Play className="w-4 h-4 text-blue-400" />;
+        return <Play className="w-4 h-4 text-info" />;
       case 'EXECUTION_COMPLETED':
-        return <CheckCircle className="w-4 h-4 text-green-400" />;
+        return <CheckCircle className="w-4 h-4 text-success" />;
       case 'EXECUTION_FAILED':
-        return <XCircle className="w-4 h-4 text-red-400" />;
+        return <XCircle className="w-4 h-4 text-destructive" />;
       case 'STEP_RESULT':
         const details = event.details;
         return details?.status === 'success' ? (
-          <CheckCircle className="w-4 h-4 text-green-400" />
+          <CheckCircle className="w-4 h-4 text-success" />
         ) : (
-          <XCircle className="w-4 h-4 text-red-400" />
+          <XCircle className="w-4 h-4 text-destructive" />
         );
       default:
-        return <Clock className="w-4 h-4 text-neutral-400" />;
+        return <Clock className="w-4 h-4 text-text-muted" />;
     }
   };
 
@@ -80,36 +81,36 @@ export function ExecutionReplay({ data }: ExecutionReplayProps) {
     return result.status;
   }, [data.results]);
 
+  const statusVariant = data.execution.status === 'completed'
+    ? 'success'
+    : data.execution.status === 'failed'
+    ? 'destructive'
+    : 'warning';
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium text-neutral-200">Execution Replay</h3>
-          <p className="text-sm text-neutral-500">{data.plan.summary}</p>
+          <h3 className="text-lg font-medium text-text-primary">Execution Replay</h3>
+          <p className="text-sm text-text-muted">{data.plan.summary}</p>
         </div>
-        <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-          data.execution.status === 'completed'
-            ? 'bg-green-500/20 text-green-400'
-            : data.execution.status === 'failed'
-            ? 'bg-red-500/20 text-red-400'
-            : 'bg-yellow-500/20 text-yellow-400'
-        }`}>
+        <Badge variant={statusVariant}>
           {data.execution.status.toUpperCase()}
-        </div>
+        </Badge>
       </div>
 
       {/* Playback Controls */}
-      <div className="flex items-center gap-4 p-4 bg-neutral-800/50 rounded-lg border border-neutral-700/50">
+      <div className="flex items-center gap-4 p-4 bg-bg-elevated rounded-lg border border-border-subtle">
         <button
           onClick={handlePlayPause}
-          className="p-2 bg-[#D4AF37]/20 rounded-lg text-[#D4AF37] hover:bg-[#D4AF37]/30 transition-colors"
+          className="p-2 bg-accent/20 rounded-lg text-accent hover:bg-accent/30 transition-colors"
         >
           {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
         </button>
         <button
           onClick={handleReset}
-          className="p-2 text-neutral-400 hover:text-neutral-200 transition-colors"
+          className="p-2 text-text-muted hover:text-text-primary transition-colors"
         >
           <RotateCcw className="w-5 h-5" />
         </button>
@@ -122,9 +123,9 @@ export function ExecutionReplay({ data }: ExecutionReplayProps) {
             max={totalEvents - 1}
             value={currentEventIndex}
             onChange={handleSliderChange}
-            className="flex-1 h-2 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-[#D4AF37]"
+            className="flex-1 h-2 bg-bg-surface rounded-lg appearance-none cursor-pointer accent-accent"
           />
-          <span className="text-xs text-neutral-500 min-w-[60px]">
+          <span className="text-xs text-text-muted min-w-[60px]">
             {currentEventIndex + 1} / {totalEvents}
           </span>
         </div>
@@ -133,7 +134,7 @@ export function ExecutionReplay({ data }: ExecutionReplayProps) {
         <select
           value={playbackSpeed}
           onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
-          className="px-2 py-1 bg-neutral-700 rounded text-sm text-neutral-200 border-none"
+          className="px-2 py-1 bg-bg-surface rounded text-sm text-text-primary border border-border-subtle"
         >
           <option value={0.5}>0.5x</option>
           <option value={1}>1x</option>
@@ -146,7 +147,7 @@ export function ExecutionReplay({ data }: ExecutionReplayProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Steps */}
         <div className="space-y-3">
-          <h4 className="text-sm font-medium text-neutral-400 uppercase tracking-wide">Steps</h4>
+          <h4 className="text-sm font-medium text-text-muted uppercase tracking-wide">Steps</h4>
           {data.plan.steps.map((step, index) => {
             const status = getStepStatus(index);
             const isActive = data.results[index]?.stepId === currentEvent?.details?.stepId;
@@ -158,16 +159,16 @@ export function ExecutionReplay({ data }: ExecutionReplayProps) {
                 animate={{ opacity: isActive ? 1 : 0.7 }}
                 className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
                   isActive
-                    ? 'bg-[#D4AF37]/10 border-[#D4AF37]/50'
-                    : 'bg-neutral-800/30 border-neutral-700/30'
+                    ? 'bg-accent/10 border-accent/50'
+                    : 'bg-bg-elevated border-border-subtle'
                 }`}
               >
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                   status === 'success'
-                    ? 'bg-green-500/20 text-green-400'
+                    ? 'bg-success/20 text-success'
                     : status === 'failed'
-                    ? 'bg-red-500/20 text-red-400'
-                    : 'bg-neutral-700/50 text-neutral-400'
+                    ? 'bg-destructive/20 text-destructive'
+                    : 'bg-bg-surface text-text-muted'
                 }`}>
                   {status === 'success' ? (
                     <CheckCircle className="w-4 h-4" />
@@ -178,10 +179,10 @@ export function ExecutionReplay({ data }: ExecutionReplayProps) {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-neutral-200 truncate">{step.toolName}</p>
-                  <p className="text-xs text-neutral-500 truncate">{step.description}</p>
+                  <p className="text-sm text-text-primary truncate">{step.toolName}</p>
+                  <p className="text-xs text-text-muted truncate">{step.description}</p>
                 </div>
-                {isActive && <ChevronRight className="w-4 h-4 text-[#D4AF37]" />}
+                {isActive && <ChevronRight className="w-4 h-4 text-accent" />}
               </motion.div>
             );
           })}
@@ -189,7 +190,7 @@ export function ExecutionReplay({ data }: ExecutionReplayProps) {
 
         {/* Event Log */}
         <div className="space-y-3">
-          <h4 className="text-sm font-medium text-neutral-400 uppercase tracking-wide">Event Log</h4>
+          <h4 className="text-sm font-medium text-text-muted uppercase tracking-wide">Event Log</h4>
           <div className="h-[400px] overflow-y-auto space-y-2 pr-2">
             {data.events.slice(0, currentEventIndex + 1).map((event, index) => (
               <motion.div
@@ -198,22 +199,22 @@ export function ExecutionReplay({ data }: ExecutionReplayProps) {
                 animate={{ opacity: 1, x: 0 }}
                 className={`flex items-start gap-3 p-2 rounded-lg ${
                   index === currentEventIndex
-                    ? 'bg-[#D4AF37]/10 border border-[#D4AF37]/30'
-                    : 'bg-neutral-800/30'
+                    ? 'bg-accent/10 border border-accent/30'
+                    : 'bg-bg-elevated'
                 }`}
               >
                 <div className="mt-0.5">{getEventIcon(event)}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-neutral-300">
+                    <span className="text-xs font-medium text-text-secondary">
                       {event.type.replace(/_/g, ' ')}
                     </span>
-                    <span className="text-xs text-neutral-500">
+                    <span className="text-xs text-text-muted">
                       {formatTimestamp(event.timestamp)}
                     </span>
                   </div>
                   {event.details && (
-                    <p className="text-xs text-neutral-500 mt-1 truncate">
+                    <p className="text-xs text-text-muted mt-1 truncate">
                       {event.details.toolName != null && `Tool: ${String(event.details.toolName)}`}
                       {event.details.error != null && ` - Error: ${String(event.details.error)}`}
                     </p>
@@ -226,9 +227,9 @@ export function ExecutionReplay({ data }: ExecutionReplayProps) {
       </div>
 
       {/* Progress Bar */}
-      <div className="h-1 bg-neutral-700/50 rounded-full overflow-hidden">
+      <div className="h-1 bg-bg-surface rounded-full overflow-hidden">
         <motion.div
-          className="h-full bg-[#D4AF37]"
+          className="h-full bg-accent"
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 0.2 }}
