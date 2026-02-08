@@ -1,6 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import { config } from './config';
 
+// Debug: Log whether env vars are set
+console.log('[Supabase] Config check - URL set:', !!config.supabaseUrl, 'ServiceKey set:', !!config.supabaseServiceRoleKey);
+console.log('[Supabase] URL length:', config.supabaseUrl?.length || 0, 'ServiceKey length:', config.supabaseServiceRoleKey?.length || 0);
+
 // Admin client with service role key for JWT verification and user management
 export const supabaseAdmin = config.supabaseUrl && config.supabaseServiceRoleKey
   ? createClient(config.supabaseUrl, config.supabaseServiceRoleKey, {
