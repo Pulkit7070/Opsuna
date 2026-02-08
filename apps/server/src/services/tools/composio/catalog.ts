@@ -122,10 +122,13 @@ export async function fetchComposioTools(forceRefresh = false): Promise<Tool[]> 
   }
 
   try {
-    // Fetch tools from popular toolkits in parallel
+    // Fetch tools from popular toolkits in parallel (higher limit for GitHub/Slack)
     const results = await Promise.allSettled(
       DEFAULT_TOOLKITS.map(tk =>
-        client.tools.getRawComposioTools({ toolkits: [tk], limit: 10 })
+        client.tools.getRawComposioTools({
+          toolkits: [tk],
+          limit: tk === 'GITHUB' || tk === 'SLACK' ? 100 : 20
+        })
       )
     );
 

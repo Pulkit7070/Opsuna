@@ -2,6 +2,7 @@ import { Tool, ToolCategory, ToolSource } from '@opsuna/shared';
 
 class ToolRegistry {
   private tools: Map<string, Tool> = new Map();
+  private initialized = false;
 
   register(tool: Tool): void {
     this.tools.set(tool.name, tool);
@@ -39,6 +40,14 @@ class ToolRegistry {
         this.tools.delete(name);
       }
     }
+  }
+
+  isInitialized(): boolean {
+    return this.initialized;
+  }
+
+  setInitialized(): void {
+    this.initialized = true;
   }
 }
 
@@ -203,5 +212,20 @@ registry.register({
   parameters: [
     { name: 'environment', type: 'string', description: 'Target environment', required: true },
     { name: 'dryRun', type: 'boolean', description: 'Preview without applying', required: false, default: false },
+  ],
+});
+
+registry.register({
+  name: 'list_github_repos',
+  displayName: 'List GitHub Repositories',
+  description: 'List repositories for a GitHub user',
+  category: 'version_control',
+  riskLevel: 'LOW',
+  rollbackSupported: false,
+  source: 'local',
+  parameters: [
+    { name: 'username', type: 'string', description: 'GitHub username', required: false },
+    { name: 'type', type: 'string', description: 'Repository type filter', required: false, enum: ['all', 'public', 'private'] },
+    { name: 'sort', type: 'string', description: 'Sort order', required: false, enum: ['created', 'updated', 'stars'] },
   ],
 });
