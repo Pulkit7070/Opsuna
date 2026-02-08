@@ -7,3 +7,4 @@ export { toolsRouter } from './tools';
 export { memoryRouter } from './memory';
 export { artifactsRouter } from './artifacts';
 export { agentsRouter } from './agents';
+export { default as builderRouter } from './builder';

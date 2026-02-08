@@ -6,7 +6,8 @@ interface TamboWrapperProps {
   children: React.ReactNode;
 }
 
-// Simplified wrapper - uses our own backend API instead of Tambo cloud
+// Simplified wrapper - Tambo integration is optional
+// The main Opsuna functionality uses our own backend API
 export function TamboWrapper({ children }: TamboWrapperProps) {
   return <>{children}</>;
 }
