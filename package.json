@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "pnpm -r --parallel dev",
     "build": "pnpm -r build",
-    "build:server": "pnpm --filter @opsuna/shared build && pnpm --filter @opsuna/server build",
+    "build:server": "pnpm --filter @opsuna/shared build && pnpm --filter @opsuna/server db:generate && pnpm --filter @opsuna/server build",
     "start:server": "pnpm --filter @opsuna/server start",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
